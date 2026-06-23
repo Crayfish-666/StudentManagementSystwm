@@ -1,0 +1,57 @@
+# =============================================================================
+# Docker 构建排除 - 避免无关文件进入构建上下文
+# =============================================================================
+
+# 版本控制
+.git/
+.gitignore
+.gitattributes
+
+# IDE / 编辑器
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 前端 - 依赖与构建产物 (Dockerfile 内部重建)
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+frontend/*.local
+frontend/logs/
+
+# 后端 - 构建产物与依赖缓存
+backend/bin/
+backend/*.exe
+backend/*.test
+backend/*.out
+backend/vendor/
+
+# 运行时数据 (容器内由卷挂载, 不应打包到镜像)
+backend/data/
+backend/storage/
+backend/logs/
+
+# 项目自身配置 (容器内通过 env 注入)
+deploy/.env
+deploy/.env.local
+
+# 文档与脚本 (体积大, 不影响运行)
+docs/
+*.md
+!README.md
+!AGENTS.md
+!frontend/README.md
+!backend/README.md
+
+# 杂项
+.DS_Store
+Thumbs.db
+*.log
+*.bak
+*.tmp
+node_modules/
+__pycache__/
+.env
+.env.*
+!.env.example

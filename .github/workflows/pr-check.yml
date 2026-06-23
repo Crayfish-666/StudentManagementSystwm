@@ -1,0 +1,101 @@
+# =============================================================================
+# StudentHub · PR 质量门禁
+# -----------------------------------------------------------------------------
+# 触发: 任何 PR 打开 / 同步 / 重新打开到 main 或 develop
+# 职责: 跑全量 lint + test + build, 任一失败阻断合入
+# 依据: docs/02_ADR.md §3.4 / §3.9 / §13.1
+# =============================================================================
+name: pr-check
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/pr-check.yml'
+
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 后端: lint + build + test
+  # ---------------------------------------------------------------------------
+  backend:
+    name: Backend (Go)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: backend/go.sum
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: backend
+          args: --timeout=5m
+
+      - name: go mod verify
+        run: go mod verify
+
+      - name: go build
+        run: go build -v ./...
+
+      - name: go test
+        # 当前仓库尚无业务测试 (ADR §3.9 目标 >=70% 后续补齐)
+        # Go test 默认 passWithNoTests=true, 不会因无测试 fail
+        run: go test -v -count=1 ./...
+
+  # ---------------------------------------------------------------------------
+  # 前端: lint + test + build
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: Frontend (Vue3)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Vitest
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

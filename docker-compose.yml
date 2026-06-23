@@ -1,0 +1,99 @@
+# =============================================================================
+# StudentHub · Docker Compose 编排
+# -----------------------------------------------------------------------------
+# 架构: 单容器一体化部署
+#   - 后端 Go (Gin) 监听 8080, 同时服务 /api/v1 与前端静态资源
+#   - 前端 Vue3 产物在构建阶段打入镜像, Gin NoRoute 回退到 index.html
+#   - SQLite + 上传文件 + 日志 通过命名卷持久化
+# -----------------------------------------------------------------------------
+# 部署到云服务器:
+#   1. 复制 deploy/.env.example 为 deploy/.env, 填入真实 JWT_SECRET / CRYPTOX_KEY
+#   2. docker compose build
+#   3. docker compose up -d
+#   4. docker compose logs -f   # 跟踪日志
+#   5. 反向代理层 (Nginx / 云 LB) -> 宿主机 :8080 -> 容器 :8080
+# =============================================================================
+
+services:
+  studenthub:
+    # 镜像名: 优先使用 build 构建, 也可改为 image: <registry>/studenthub:tag
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${IMAGE_NAME:-studenthub}:${IMAGE_TAG:-latest}
+    container_name: studenthub
+
+    # 从 .env 加载环境变量 (敏感配置)
+    # 注意: .env 中已设置 APP_ENV / JWT_SECRET / CRYPTOX_KEY / TZ
+    env_file:
+      - deploy/.env
+
+    # 显式声明运行时环境变量 (覆盖 .env 或提供默认)
+    environment:
+      # 运行模式: prod / dev, 容器内启动脚本会基于此值校验 JWT_SECRET
+      APP_ENV: ${APP_ENV:-prod}
+      # 时区
+      TZ: ${TZ:-Asia/Shanghai}
+
+    # 端口映射
+    #   - 主机侧端口由 HOST_PORT 控制 (云服务器防火墙需放行)
+    #   - 容器内固定 8080 (与 Gin 监听端口一致)
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+
+    # 命名卷持久化
+    #   - data    : SQLite 主库 + WAL/SHM (数据库演进 5 年留存, 严禁丢失)
+    #   - storage : 文件上传 (思想汇报 / 活动照片 / 政审材料)
+    #   - logs    : 应用运行日志 (180d+)
+    volumes:
+      - studenthub_data:/app/data
+      - studenthub_storage:/app/storage
+      - studenthub_logs:/app/logs
+
+    # 重启策略: 总是自动重启 (除手动 stop)
+    restart: unless-stopped
+
+    # 容器内用户 (与 Dockerfile 中创建的非 root 用户一致)
+    user: "1000:1000"
+
+    # 健康检查 (与 Dockerfile 中 HEALTHCHECK 指令一致, 双保险)
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/v1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    # 资源限制 (生产建议按需调整, 开学季并发高可调高)
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+    # 日志驱动 (限制单个日志文件大小, 防止磁盘被刷爆)
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+
+    # 优雅关闭 (给容器 30s 处理完请求后再 kill)
+    stop_grace_period: 30s
+    stop_signal: SIGTERM
+
+# -----------------------------------------------------------------------------
+# 命名卷 (Docker 自动管理, 默认位于 /var/lib/docker/volumes/)
+# 备份建议: docker run --rm -v studenthub_data:/data -v $(pwd):/backup \
+#              alpine tar czf /backup/studenthub_data_$(date +%F).tgz /data
+# -----------------------------------------------------------------------------
+volumes:
+  studenthub_data:
+    name: studenthub_data
+  studenthub_storage:
+    name: studenthub_storage
+  studenthub_logs:
+    name: studenthub_logs

@@ -1,0 +1,15 @@
+# Build artifacts
+/bin/
+*.exe
+*.test
+*.out
+
+# DB / runtime data
+/data/
+
+# Vendor / dependency caches
+/vendor/
+
+# IDE
+.idea/
+.vscode/

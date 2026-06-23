@@ -1,0 +1,101 @@
+# =============================================================================
+# StudentHub 后端 golangci-lint 配置
+# -----------------------------------------------------------------------------
+# 依据: docs/02_ADR.md §3.4.1 Go 代码风格与质量门禁
+# 启用项: govet / staticcheck / errcheck / ineffassign / gofmt / goimports /
+#         revive / gocyclo(<=20) / gocognit(<=25) / misspell / bodyclose /
+#         sqlclosecheck / prealloc
+# =============================================================================
+
+run:
+  # 相对 backend/ 目录
+  relative-path-mode: gomod
+  # 允许分析超过 deadline 的代码
+  timeout: 5m
+  # 失败时不打印 issues 行源代码
+  print-issued-lines: false
+  # 输出格式
+  output:
+    format: colored-line-number
+    print-linter-name: true
+
+linters:
+  disable-all: true
+  enable:
+    # ADR §3.4.1 要求的 linter 清单
+    - govet
+    - staticcheck       # 包含 unused / gosimple (新版已合并)
+    - errcheck
+    - ineffassign
+    - gofmt
+    - goimports
+    - revive
+    - gocyclo
+    - gocognit
+    - misspell
+    - bodyclose
+    - sqlclosecheck
+    - prealloc
+
+linters-settings:
+  gocyclo:
+    # ADR §3.4.1 要求圈复杂度 <= 20
+    min-complexity: 20
+  gocognit:
+    # ADR §3.4.1 要求认知复杂度 <= 25
+    min-complexity: 25
+  goimports:
+    # 本地包前缀 (与 go.mod module 保持一致)
+    local-prefixes: student-system
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+      - name: package-comments
+        disabled: false
+      - name: error-strings
+        disabled: false
+      - name: error-naming
+        disabled: false
+      - name: error-return
+        disabled: false
+      - name: var-naming
+        disabled: false
+      - name: var-declaration
+        disabled: false
+      - name: dot-imports
+        disabled: false
+  misspell:
+    locale: zh
+    ignore-words:
+      - studenthub
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: true
+
+issues:
+  # 单文件最大问题数, 超过直接失败
+  max-issues-per-linter: 50
+  max-same-issues: 10
+  # 排除规则
+  exclude-rules:
+    # 测试文件中允许使用 _ = err
+    - path: _test\.go
+      linters:
+        - errcheck
+        - revive
+    # 自动生成文件
+    - path: \.pb\.go$
+      linters:
+        - all
+    # vendor 与 build 产物
+    - path: vendor/
+      linters:
+        - all
+  exclude-dirs:
+    - data
+    - dist
+    - node_modules
+    - storage
+    - logs

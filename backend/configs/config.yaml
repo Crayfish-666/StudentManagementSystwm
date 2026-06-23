@@ -1,0 +1,13 @@
+app:
+  env: dev
+  port: 18080
+  name: student-system
+db:
+  path: ./data/studenthub.db
+log:
+  level: info
+jwt:
+  secret: "studenthub-dev-jwt-secret-change-in-prod"
+  access_ttl: 15m
+  refresh_ttl: 168h
+  issuer: studenthub

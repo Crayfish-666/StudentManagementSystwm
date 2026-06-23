@@ -1,0 +1,73 @@
+# =============================================================================
+# StudentHub 根目录 .gitignore
+# =============================================================================
+# 决策依据（与用户确认）：
+#   - docs/ 全部入仓（PRD/ADR/数据库/API 规范/迭代计划）
+#   - .trae/ 全部入仓（IDE 规则与技能）
+#   - .github/workflows/ 全部入仓（CI 配置）
+#   - deploy/.env.example 入仓
+#   - backend/data/ 全部排除（含真实数据、备份、烟测脚本、日志）
+#   - backend/storage/ 全部排除（用户上传材料）
+#   - frontend/package-lock.json 与 pnpm-lock.yaml 均保留
+# =============================================================================
+
+# -------- 部署 / 敏感配置（严禁入仓） --------
+deploy/.env
+deploy/.env.local
+deploy/.env.*.local
+.env
+.env.*
+!.env.example
+
+# 镜像构建产物
+*.tar
+*.tar.gz
+*.tgz
+
+# -------- IDE / 编辑器 --------
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# -------- 操作系统 / 杂项 --------
+__pycache__/
+*.tmp
+*.bak
+*.pid
+*.err
+*.out
+*.log
+
+# -------- 根目录调试脚本 / 凭证 --------
+/debug_*.py
+/login.json
+/test_*.ps1
+/verify_*.ps1
+/*.ps1
+
+# -------- 后端运行时产物与本地数据 --------
+/backend/data/
+/backend/logs/
+/backend/storage/
+/backend/bin/
+/backend/*.exe
+/backend/*.exe~
+/backend/*.test
+/backend/users_payload.json
+/backend/test_*.ps1
+/backend/verify_*.ps1
+/backend/*_smoke.ps1
+/backend/*_debug*.ps1
+/backend/menu_*.ps1
+/backend/cmp_smoke.ps1
+/backend/seedall.*
+/backend/student-system.*
+
+# -------- 前端依赖与构建产物 --------
+/frontend/node_modules/
+/frontend/dist/
+/frontend/logs/
+/frontend/.DS_Store

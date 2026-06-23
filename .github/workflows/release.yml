@@ -1,0 +1,179 @@
+# =============================================================================
+# StudentHub · Release 构建 + 部署 (prod)
+# -----------------------------------------------------------------------------
+# 触发: push tag v*.*.* (如 v1.0.0) 或 workflow_dispatch
+# 流程: 构建 Docker 镜像 (semver 多 tag) -> 推送到自建 Registry
+#       -> 创建 GitHub Release -> SSH 部署到生产
+# 依据: docs/02_ADR.md §3.5 prod: main + tag vX.Y.Z
+# 凭据: 见 .github/SECRETS.md
+# =============================================================================
+name: release-prod
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '发布版本 (例: v1.0.0), 留空则使用 latest'
+        required: false
+        default: ''
+
+concurrency:
+  group: release-prod-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: ${{ vars.IMAGE_NAME || 'studenthub' }}
+  REGISTRY: ${{ secrets.REGISTRY_URL }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 构建 + 推送镜像
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve metadata (tag 模式)
+        id: meta
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=studenthub
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ github.ref_name }}
+
+      - name: Resolve metadata (manual 模式)
+        id: meta-manual
+        if: github.event_name == 'workflow_dispatch'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable=${{ github.event.inputs.tag != '' }}
+            type=raw,value=latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Registry
+        if: env.REGISTRY != ''
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ env.REGISTRY != '' }}
+          tags: ${{ steps.meta.outputs.tags || steps.meta-manual.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels || steps.meta-manual.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+  # ---------------------------------------------------------------------------
+  # 创建 GitHub Release (仅 tag 触发)
+  # ---------------------------------------------------------------------------
+  release:
+    name: Create GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') && env.REGISTRY != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          {
+            echo "## 更新日志"
+            echo ""
+            echo "镜像已推送: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}\`"
+            echo ""
+            echo "### 变更"
+            echo ""
+            PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v' | sed -n '2p' || echo "")
+            if [ -n "$PREV_TAG" ]; then
+              git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD
+            else
+              git log --pretty=format:"- %s (%h)" -n 50
+            fi
+          } > release_notes.md
+          echo "::set-output name=notes::$(cat release_notes.md)"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body_path: release_notes.md
+          draft: true
+          generate_release_notes: false
+
+  # ---------------------------------------------------------------------------
+  # SSH 部署到生产 (仅 tag 触发)
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Production
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') && env.REGISTRY != ''
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Copy deploy script
+        run: |
+          mkdir -p ./.github/_ssh
+          cp ./deploy/deploy.sh ./.github/_ssh/deploy.sh
+          chmod +x ./.github/_ssh/deploy.sh
+
+      - name: Deploy via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: '.github/_ssh/deploy.sh'
+          target: '~/studenthub-deploy/'
+
+      - name: Trigger remote deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            export REGISTRY_URL='${{ secrets.REGISTRY_URL }}'
+            export REGISTRY_USERNAME='${{ secrets.REGISTRY_USERNAME }}'
+            export REGISTRY_PASSWORD='${{ secrets.REGISTRY_PASSWORD }}'
+            export IMAGE_TAG=${{ github.ref_name }}
+            export DEPLOY_ENV=production
+            bash ./deploy/deploy.sh
