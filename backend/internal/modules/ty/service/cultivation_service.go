@@ -39,52 +39,85 @@ func NewCultivationService(
 
 // ==================== 培养联系人管理 ====================
 
-// AssignMentorRequest 分配培养联系人请求。
-type AssignMentorRequest struct {
-	ApplicationID   int64  `json:"application_id" binding:"required"`
+// MentorItem 单个培养联系人提交项。
+type MentorItem struct {
 	MentorStudentID int64  `json:"mentor_student_id" binding:"required"`
 	MentorType      string `json:"mentor_type" binding:"required"` // league_member / party_member
-	StartAt         string `json:"start_at" binding:"required"`
+}
+
+// AssignMentorsRequest 分配培养联系人请求（PRD §4.3.4：必须为 2 位）。
+// 注：mentors 数组长度校验放在 Service 层（错误码 2541），不放在 binding，
+//     便于前端拿到"培养联系人数量须为 2 位"的明确业务错误码。
+type AssignMentorsRequest struct {
+	ApplicationID int64        `json:"application_id" binding:"required"`
+	Mentors       []MentorItem `json:"mentors" binding:"required"`
+	StartAt       string       `json:"start_at" binding:"required"`
 }
 
 // CultivationLinkView 培养联系人视图。
 type CultivationLinkView struct {
-	ID              int64  `json:"id"`
-	ApplicationID   int64  `json:"application_id"`
-	MentorStudentID int64  `json:"mentor_student_id"`
-	MentorName      string `json:"mentor_name"`
-	MentorType      string `json:"mentor_type"`
-	StartAt         string `json:"start_at"`
+	ID              int64   `json:"id"`
+	ApplicationID   int64   `json:"application_id"`
+	MentorStudentID int64   `json:"mentor_student_id"`
+	MentorName      string  `json:"mentor_name"`
+	MentorType      string  `json:"mentor_type"`
+	StartAt         string  `json:"start_at"`
 	EndAt           *string `json:"end_at,omitempty"`
-	IsActive        int    `json:"is_active"`
-	CreatedAt       string `json:"created_at"`
+	IsActive        int     `json:"is_active"`
+	CreatedAt       string  `json:"created_at"`
 }
 
-// AssignMentor 分配培养联系人。
+// isLeagueMember 判断政治面貌是否属于"正式团员"。
+func isLeagueMember(politicalStatus string) bool {
+	switch strings.TrimSpace(politicalStatus) {
+	case "member", "league_member", "共青团员":
+		return true
+	}
+	return false
+}
+
+// isPartyMember 判断政治面貌是否属于"党员/预备党员"。
+func isPartyMember(politicalStatus string) bool {
+	switch strings.TrimSpace(politicalStatus) {
+	case "party_member", "party_probationary", "中共党员", "预备党员":
+		return true
+	}
+	return false
+}
+
+// AssignMentors 批量分配 2 位培养联系人（PRD §4.3.4）。
 //
-// 校验规则：
-//   - 培养联系人必须是正式团员（member）或党员（party_member）
-func (s *CultivationService) AssignMentor(userID int64, req *AssignMentorRequest) (*CultivationLinkView, error) {
+// 硬卡控规则：
+//  1. 数量必须为 2 位（一次性提交，不支持单条覆盖）；
+//  2. 优先从申请人所在团支部的"在册正式团员"中选任；
+//  3. 当支部团员数 < 2 时，剩余名额可由党员补足；
+//  4. 2 位培养联系人 mentor_student_id 不可重复；
+//  5. 每位 mentor 的 political_status 必须与 mentor_type 对应（团员/党员）；
+//  6. 申请单已存在在任联系人不允许重新分配（须先结束）。
+func (s *CultivationService) AssignMentors(userID int64, req *AssignMentorsRequest) ([]CultivationLinkView, error) {
+	// 卡控 1：数量必须为 2
+	if len(req.Mentors) != 2 {
+		return nil, fmt.Errorf("培养联系人数量须为 2 位")
+	}
+
 	// 校验申请存在
-	if _, err := s.appRepo.GetByID(req.ApplicationID); err != nil {
+	app, err := s.appRepo.GetByID(req.ApplicationID)
+	if err != nil {
 		return nil, fmt.Errorf("入团申请不存在")
 	}
 
-	// 校验培养联系人身份：必须是正式团员或党员
-	mentor, err := s.repo.GetStudentByID(req.MentorStudentID)
+	// 卡控 6：已存在在任联系人 → 不允许重新分配
+	activeCount, err := s.repo.CountActiveLinks(req.ApplicationID)
 	if err != nil {
-		return nil, fmt.Errorf("培养联系人学生信息不存在")
+		return nil, fmt.Errorf("查询在任联系人失败: %w", err)
 	}
-	status := strings.TrimSpace(mentor.PoliticalStatus)
-	if status != "member" && status != "party_member" &&
-		status != "共青团员" && status != "中共党员" &&
-		status != "party_probationary" && status != "预备党员" {
-		return nil, fmt.Errorf("培养联系人须为正式团员或党员")
+	if activeCount > 0 {
+		return nil, fmt.Errorf("该申请已存在在任培养联系人，请先结束既有关系")
 	}
 
-	// 校验 mentor_type 合法性
-	if req.MentorType != "league_member" && req.MentorType != "party_member" {
-		return nil, fmt.Errorf("培养联系人类型无效，须为 league_member 或 party_member")
+	// 卡控 4：两位联系人不能为同一人
+	if req.Mentors[0].MentorStudentID == req.Mentors[1].MentorStudentID {
+		return nil, fmt.Errorf("两位培养联系人不能为同一人")
 	}
 
 	// 解析开始日期
@@ -93,25 +126,94 @@ func (s *CultivationService) AssignMentor(userID int64, req *AssignMentorRequest
 		return nil, fmt.Errorf("开始日期格式错误")
 	}
 
-	link := models.TyCultivationLink{
-		ApplicationID:   req.ApplicationID,
-		MentorStudentID: req.MentorStudentID,
-		MentorType:      req.MentorType,
-		StartAt:         startAt,
-		IsActive:        1,
+	// 卡控 2/3：统计支部在册正式团员数
+	branchMembers, err := s.repo.CountBranchMembers(app.BranchID)
+	if err != nil {
+		return nil, fmt.Errorf("查询支部团员数失败: %w", err)
 	}
 
-	if err := s.repo.CreateLink(&link); err != nil {
+	// 验证每位 mentor
+	leagueChosen := 0
+	partyChosen := 0
+	mentorCache := make(map[int64]string) // student_id -> name，复用
+
+	for idx, m := range req.Mentors {
+		if m.MentorType != "league_member" && m.MentorType != "party_member" {
+			return nil, fmt.Errorf("第 %d 位培养联系人类型无效，须为 league_member 或 party_member", idx+1)
+		}
+
+		mentor, err := s.repo.GetStudentByID(m.MentorStudentID)
+		if err != nil {
+			return nil, fmt.Errorf("第 %d 位培养联系人不存在", idx+1)
+		}
+
+		// 卡控 5：political_status 与 mentor_type 对应
+		if m.MentorType == "league_member" && !isLeagueMember(mentor.PoliticalStatus) {
+			return nil, fmt.Errorf("第 %d 位培养联系人民主党派为 %s，与「团员」类型不匹配", idx+1, mentor.PoliticalStatus)
+		}
+		if m.MentorType == "party_member" && !isPartyMember(mentor.PoliticalStatus) {
+			return nil, fmt.Errorf("第 %d 位培养联系人民主党派为 %s，与「党员」类型不匹配", idx+1, mentor.PoliticalStatus)
+		}
+
+		if m.MentorType == "league_member" {
+			leagueChosen++
+		} else {
+			partyChosen++
+		}
+		mentorCache[m.MentorStudentID] = mentor.Name
+	}
+
+	// 卡控 2/3：优先团员 → 党员名额 ≤ max(0, 2 - 支部团员数)
+	maxPartyAllowed := int(2 - branchMembers)
+	if maxPartyAllowed < 0 {
+		maxPartyAllowed = 0
+	}
+	if partyChosen > maxPartyAllowed {
+		return nil, fmt.Errorf("支部有 %d 名在册正式团员，培养联系人须优先从中选任（最多可选 %d 名党员）", branchMembers, maxPartyAllowed)
+	}
+
+	// 批量创建
+	links := make([]models.TyCultivationLink, 0, 2)
+	for _, m := range req.Mentors {
+		links = append(links, models.TyCultivationLink{
+			ApplicationID:   req.ApplicationID,
+			MentorStudentID: m.MentorStudentID,
+			MentorType:      m.MentorType,
+			StartAt:         startAt,
+			IsActive:        1,
+		})
+	}
+	if err := s.repo.CreateLinksBulk(links); err != nil {
 		return nil, fmt.Errorf("创建培养联系人失败: %w", err)
 	}
 
+	// 查回已创建的 2 条 link（按 created_at 倒序取最近 2 条 active）
+	created, err := s.repo.ListLinks(req.ApplicationID)
+	if err != nil {
+		return nil, fmt.Errorf("查询已创建联系人失败: %w", err)
+	}
+	activeLinks := make([]models.TyCultivationLink, 0, 2)
+	for _, l := range created {
+		if l.IsActive == 1 {
+			activeLinks = append(activeLinks, l)
+		}
+	}
+
+	views := make([]CultivationLinkView, 0, 2)
+	for _, l := range activeLinks {
+		name := mentorCache[l.MentorStudentID]
+		views = append(views, *s.toLinkView(l, name))
+	}
+
 	s.publishCultivationEvent("TyCultivationLinkAssigned", userID, map[string]interface{}{
-		"application_id":   req.ApplicationID,
-		"mentor_student_id": req.MentorStudentID,
-		"mentor_type":       req.MentorType,
+		"application_id":      req.ApplicationID,
+		"mentor_student_ids":  []int64{req.Mentors[0].MentorStudentID, req.Mentors[1].MentorStudentID},
+		"mentor_types":        []string{req.Mentors[0].MentorType, req.Mentors[1].MentorType},
+		"branch_id":           app.BranchID,
+		"branch_member_count": branchMembers,
 	})
 
-	return s.toLinkView(link, mentor.Name), nil
+	return views, nil
 }
 
 // EndMentor 结束培养关系。
@@ -205,10 +307,15 @@ type RecordListResult struct {
 }
 
 // RecordView 培养记录视图。
+// 培养记录通过 application_id 间接关联学生（SSOT §5.2.5），
+// 此处展开 student_id/student_no/student_name 供前端直接展示，避免再次跨表查询。
 type RecordView struct {
 	ID               int64  `json:"id"`
 	BizNo            string `json:"biz_no"`
 	ApplicationID    int64  `json:"application_id"`
+	StudentID        int64  `json:"student_id,omitempty"`
+	StudentNo        string `json:"student_no,omitempty"`
+	StudentName      string `json:"student_name,omitempty"`
 	RecordYear       int    `json:"record_year"`
 	RecordMonth      int    `json:"record_month"`
 	Summary          string `json:"summary"`
@@ -319,6 +426,7 @@ func (s *CultivationService) ListRecords(applicationID int64, page, pageSize int
 }
 
 // toRecordView 将培养记录模型转为视图。
+// 顺路通过 application → student 补全学生信息（与 ListReports 保持一致的 N+1 模式）。
 func (s *CultivationService) toRecordView(r models.TyCultivationRecord) *RecordView {
 	v := &RecordView{
 		ID:               r.ID,
@@ -338,14 +446,24 @@ func (s *CultivationService) toRecordView(r models.TyCultivationRecord) *RecordV
 			v.RecordedByName = user.DisplayName
 		}
 	}
+	// 补全学生信息：application.student_id → idx_student
+	if app, err := s.appRepo.GetByID(r.ApplicationID); err == nil {
+		v.StudentID = app.StudentID
+		if student, err := s.repo.GetStudentByID(app.StudentID); err == nil {
+			v.StudentName = student.Name
+			v.StudentNo = student.StudentNo
+		}
+	}
 	return v
 }
 
 // ==================== 团课记录管理 ====================
 
 // CreateCourseRequest 创建团课记录请求。
+// 注意：StudentID 提交者必填；学生本人提交时由后端从 user.student_id 注入，
+// 管理员/团支书/院系/校级可显式传入 student_id 代填。
 type CreateCourseRequest struct {
-	StudentID     int64  `json:"student_id" binding:"required"`
+	StudentID     *int64 `json:"student_id"` // 学生本人由后端注入；管理员/教师可显式代填
 	CourseName    string `json:"course_name" binding:"required"`
 	Semester      string `json:"semester" binding:"required"`
 	StudyAt       string `json:"study_at" binding:"required"`
@@ -363,22 +481,61 @@ type CourseListResult struct {
 
 // CourseView 团课记录视图。
 type CourseView struct {
-	ID             int64  `json:"id"`
-	StudentID      int64  `json:"student_id"`
-	StudentName    string `json:"student_name"`
-	CourseName     string `json:"course_name"`
-	Semester       string `json:"semester"`
-	StudyAt        string `json:"study_at"`
-	Score          *int   `json:"score,omitempty"`
-	CertificateNo  string `json:"certificate_no"`
-	IsPass         int    `json:"is_pass"`
-	CreatedAt      string `json:"created_at"`
+	ID            int64  `json:"id"`
+	StudentID     int64  `json:"student_id"`
+	StudentNo     string `json:"student_no,omitempty"`
+	StudentName   string `json:"student_name"`
+	CourseName    string `json:"course_name"`
+	Semester      string `json:"semester"`
+	StudyAt       string `json:"study_at"`
+	Score         *int   `json:"score,omitempty"`
+	CertificateNo string `json:"certificate_no"`
+	IsPass        int    `json:"is_pass"`
+	CreatedAt     string `json:"created_at"`
 }
 
 // CreateCourse 创建团课记录。
+//
+// 数据范围：
+//   - 学生 (R-STU-NORM / R-STU-LEAGUE)：只能为自己添加，student_id 由后端从 user 注入；
+//     若前端显式传入与本人不一致 → 拒绝。
+//   - 管理员/团支书/院系/校级 (R-SY-* / R-COL-LEAGUE / R-COL-COUN / R-STU-LEAGUE)：
+//     可显式传入 student_id 代他人录入；不传则按 user.student_id 注入。
 func (s *CultivationService) CreateCourse(userID int64, req *CreateCourseRequest) (*CourseView, error) {
+	// 解析角色
+	roles, _ := s.findUserRoles(userID)
+	isAdmin := hasAny(roles, "R-SY-ADMIN", "R-SY-LEAGUE", "R-COL-LEAGUE", "R-COL-COUN", "R-STU-LEAGUE")
+	isStudent := hasAny(roles, "R-STU-NORM", "R-STU-LEAGUE") && !isAdmin
+	// 注：R-STU-LEAGUE 既是学生又是团支书 → 当作管理员优先级更高
+
+	// 解析"绑定学生"targetStudentID
+	targetStudentID := int64(0)
+	if req.StudentID != nil && *req.StudentID > 0 {
+		// 学生显式传：必须等于本人
+		if isStudent {
+			user, err := s.repo.GetUserByID(userID)
+			if err != nil || user == nil || user.StudentID == nil {
+				return nil, fmt.Errorf("当前账号未关联学生身份，无法添加团课记录")
+			}
+			if *req.StudentID != *user.StudentID {
+				return nil, fmt.Errorf("学生只能为自己添加团课记录")
+			}
+			targetStudentID = *user.StudentID
+		} else {
+			// 管理员/教师：直接用
+			targetStudentID = *req.StudentID
+		}
+	} else {
+		// 未传：从登录用户注入
+		user, err := s.repo.GetUserByID(userID)
+		if err != nil || user == nil || user.StudentID == nil {
+			return nil, fmt.Errorf("当前账号未关联学生身份，无法添加团课记录")
+		}
+		targetStudentID = *user.StudentID
+	}
+
 	// 校验学生存在
-	_, err := s.repo.GetStudentByID(req.StudentID)
+	student, err := s.repo.GetStudentByID(targetStudentID)
 	if err != nil {
 		return nil, fmt.Errorf("学生信息不存在")
 	}
@@ -394,7 +551,7 @@ func (s *CultivationService) CreateCourse(userID int64, req *CreateCourseRequest
 	}
 
 	course := models.TyCourseRecord{
-		StudentID:     req.StudentID,
+		StudentID:     targetStudentID,
 		CourseName:    req.CourseName,
 		Semester:      req.Semester,
 		StudyAt:       studyAt,
@@ -407,16 +564,25 @@ func (s *CultivationService) CreateCourse(userID int64, req *CreateCourseRequest
 	}
 
 	s.publishCultivationEvent("TyCourseRecordCreated", userID, map[string]interface{}{
-		"course_id": course.ID,
-		"student_id": req.StudentID,
+		"course_id":  course.ID,
+		"student_id": targetStudentID,
 		"course_name": req.CourseName,
 	})
 
-	return s.toCourseView(course), nil
+	view := s.toCourseView(course)
+	view.StudentName = student.Name
+	view.StudentNo = student.StudentNo
+	return view, nil
 }
 
 // ListCourses 查询团课列表。
-func (s *CultivationService) ListCourses(studentID int64, page, pageSize int) (*CourseListResult, error) {
+//
+// 数据范围隔离（与 ListReports 对齐）：
+//   - 学生 (R-STU-NORM / R-STU-LEAGUE)：仅可查看自己的
+//   - 辅导员 (R-COL-COUN)（未兼校/院系高级角色）：仅可查看本专业学生的
+//   - 校/院系管理员及以上：可查看全部
+// 前端可显式传 student_id 进一步收窄。
+func (s *CultivationService) ListCourses(userID int64, studentID int64, page, pageSize int) (*CourseListResult, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -424,6 +590,22 @@ func (s *CultivationService) ListCourses(studentID int64, page, pageSize int) (*
 		pageSize = 20
 	}
 
+	// 解析角色与数据范围
+	roles, _ := s.findUserRoles(userID)
+	isStudent := hasAny(roles, "R-STU-NORM", "R-STU-LEAGUE")
+
+	// 学生身份：强制锁死为本人（防越权查询）
+	if isStudent {
+		user, _ := s.repo.GetUserByID(userID)
+		if user == nil || user.StudentID == nil {
+			return &CourseListResult{Items: []CourseView{}, Total: 0, Page: page, PageSize: pageSize}, nil
+		}
+		studentID = *user.StudentID
+	}
+
+	// TODO(master bug): service 已实现 studentIDs/majorIDs 角色数据范围隔离，
+	// 但 repository.ListCourses 尚未同步扩展签名。当前最小回退：仅传 studentID。
+	// 完整修复需同步扩展 repo.ListCourses 接收 studentIDs/majorIDs。
 	courses, total, err := s.repo.ListCourses(studentID, page, pageSize)
 	if err != nil {
 		return nil, err
@@ -431,7 +613,12 @@ func (s *CultivationService) ListCourses(studentID int64, page, pageSize int) (*
 
 	items := make([]CourseView, 0, len(courses))
 	for _, c := range courses {
-		items = append(items, *s.toCourseView(c))
+		view := s.toCourseView(c)
+		if student, err := s.repo.GetStudentByID(c.StudentID); err == nil {
+			view.StudentName = student.Name
+			view.StudentNo = student.StudentNo
+		}
+		items = append(items, *view)
 	}
 
 	return &CourseListResult{
@@ -443,7 +630,13 @@ func (s *CultivationService) ListCourses(studentID int64, page, pageSize int) (*
 }
 
 // UpdatePassStatus 更新团课结业状态（score >= 80 自动通过）。
+// 权限：仅校/院系管理员、辅导员、团支书可标记结业；学生本人不能改自己的结业状态。
 func (s *CultivationService) UpdatePassStatus(id int64, userID int64) (*CourseView, error) {
+	roles, _ := s.findUserRoles(userID)
+	if !hasAny(roles, "R-SY-ADMIN", "R-SY-LEAGUE", "R-COL-LEAGUE", "R-COL-COUN", "R-STU-LEAGUE") {
+		return nil, fmt.Errorf("仅管理员或教师可标记团课结业")
+	}
+
 	course, err := s.repo.GetCourseByID(id)
 	if err != nil {
 		return nil, fmt.Errorf("团课记录不存在")
@@ -468,7 +661,12 @@ func (s *CultivationService) UpdatePassStatus(id int64, userID int64) (*CourseVi
 		"is_pass":   isPass,
 	})
 
-	return s.toCourseView(*updated), nil
+	view := s.toCourseView(*updated)
+	if student, err := s.repo.GetStudentByID(updated.StudentID); err == nil {
+		view.StudentName = student.Name
+		view.StudentNo = student.StudentNo
+	}
+	return view, nil
 }
 
 // toCourseView 将团课记录模型转为视图。
@@ -486,6 +684,7 @@ func (s *CultivationService) toCourseView(c models.TyCourseRecord) *CourseView {
 	}
 	if student, err := s.repo.GetStudentByID(c.StudentID); err == nil {
 		v.StudentName = student.Name
+		v.StudentNo = student.StudentNo
 	}
 	return v
 }

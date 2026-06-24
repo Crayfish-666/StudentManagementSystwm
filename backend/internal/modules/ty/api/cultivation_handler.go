@@ -22,27 +22,49 @@ func NewCultivationHandler(svc *service.CultivationService) *CultivationHandler 
 // ==================== 培养联系人接口 ====================
 
 // AssignMentor 分配培养联系人。POST /api/v1/ty/cultivation-links
-func (h *CultivationHandler) AssignMentor(c *gin.Context) {
+// AssignMentors 批量分配 2 位培养联系人（PRD §4.3.4）。POST /api/v1/ty/cultivation-links
+//
+// 请求体：
+//
+//	{
+//	  "application_id": 88,
+//	  "start_at": "2026-06-24",
+//	  "mentors": [
+//	    { "mentor_student_id": 12, "mentor_type": "league_member" },
+//	    { "mentor_student_id": 13, "mentor_type": "league_member" }
+//	  ]
+//	}
+//
+// 响应：data 为两位联系人的视图数组。
+func (h *CultivationHandler) AssignMentors(c *gin.Context) {
 	uid, _ := c.Get("uid")
 	userID, _ := uid.(int64)
 
-	var req service.AssignMentorRequest
+	var req service.AssignMentorsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 40001, "参数不完整: "+err.Error())
 		return
 	}
 
-	result, err := h.svc.AssignMentor(userID, &req)
+	result, err := h.svc.AssignMentors(userID, &req)
 	if err != nil {
 		msg := err.Error()
 		code := 1500
-		switch msg {
-		case "入团申请不存在":
+		switch {
+		case msg == "入团申请不存在":
 			code = 1404
-		default:
-			if contains(msg, "须为正式团员或党员") || contains(msg, "培养联系人身份") {
-				code = 2540
-			}
+		case contains(msg, "已存在在任培养联系人"):
+			code = 2540
+		case contains(msg, "培养联系人数量须为 2 位"):
+			code = 2541
+		case contains(msg, "两位培养联系人不能为同一人"):
+			code = 2542
+		case contains(msg, "类型无效") || contains(msg, "类型与"):
+			code = 2543
+		case contains(msg, "不存在") || contains(msg, "民主党派"):
+			code = 2544
+		case contains(msg, "优先从中选任") || contains(msg, "优先从支部团员"):
+			code = 2545
 		}
 		response.Fail(c, code, msg)
 		return
@@ -167,6 +189,9 @@ func (h *CultivationHandler) CreateCourse(c *gin.Context) {
 
 // ListCourses 查询团课列表。GET /api/v1/ty/course-records?student_id=xxx
 func (h *CultivationHandler) ListCourses(c *gin.Context) {
+	uid, _ := c.Get("uid")
+	userID, _ := uid.(int64)
+
 	var studentID int64
 	if v := c.Query("student_id"); v != "" {
 		studentID, _ = strconv.ParseInt(v, 10, 64)
@@ -174,7 +199,7 @@ func (h *CultivationHandler) ListCourses(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
-	result, err := h.svc.ListCourses(studentID, page, pageSize)
+	result, err := h.svc.ListCourses(userID, studentID, page, pageSize)
 	if err != nil {
 		response.Fail(c, 1500, "查询团课记录失败")
 		return
@@ -281,7 +306,7 @@ func (h *CultivationHandler) RegisterRoutes(rg *gin.RouterGroup, _ gin.HandlerFu
 	ty := rg.Group("/ty")
 	{
 		// 培养联系人
-		ty.POST("/cultivation-links", h.AssignMentor)
+		ty.POST("/cultivation-links", h.AssignMentors)
 		ty.GET("/cultivation-links", h.ListLinks)
 		ty.POST("/cultivation-links/:id/end", h.EndMentor)
 

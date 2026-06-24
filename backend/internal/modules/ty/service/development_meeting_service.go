@@ -61,6 +61,8 @@ type DevelopmentMeetingView struct {
 	ID                int64  `json:"id"`
 	BizNo             string `json:"biz_no"`
 	DevelopmentID     int64  `json:"development_id"`
+	StudentID         int64  `json:"student_id,omitempty"`
+	StudentName       string `json:"student_name,omitempty"`
 	MeetingAt         string `json:"meeting_at"`
 	ExpectedCount     int    `json:"expected_count"`
 	ActualCount       int    `json:"actual_count"`
@@ -308,7 +310,7 @@ func (s *DevelopmentMeetingService) ListByDevelopmentID(developmentID int64) ([]
 
 // toView 将模型转为视图。
 func (s *DevelopmentMeetingService) toView(meeting models.TyDevelopmentMeeting) *DevelopmentMeetingView {
-	return &DevelopmentMeetingView{
+	v := &DevelopmentMeetingView{
 		ID:                meeting.ID,
 		BizNo:             meeting.BizNo,
 		DevelopmentID:     meeting.DevelopmentID,
@@ -324,6 +326,18 @@ func (s *DevelopmentMeetingService) toView(meeting models.TyDevelopmentMeeting) 
 		CreatedAt:         meeting.CreatedAt.Format("2006-01-02T15:04:05+08:00"),
 		UpdatedAt:         meeting.UpdatedAt.Format("2006-01-02T15:04:05+08:00"),
 	}
+
+	// 通过发展对象→入团申请→学生 回填申请人姓名
+	if devObj, err := s.devRepo.GetByID(meeting.DevelopmentID); err == nil && devObj != nil {
+		if app, err := s.appRepo.GetByID(devObj.ApplicationID); err == nil && app != nil {
+			v.StudentID = app.StudentID
+			if stu, err := s.appRepo.GetStudentByID(app.StudentID); err == nil && stu != nil {
+				v.StudentName = stu.Name
+			}
+		}
+	}
+
+	return v
 }
 
 // publishMeetingEvent 发布发展大会相关事件。

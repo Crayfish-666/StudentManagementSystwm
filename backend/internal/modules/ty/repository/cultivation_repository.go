@@ -25,6 +25,46 @@ func (r *CultivationRepository) CreateLink(link *models.TyCultivationLink) error
 	return r.db.Create(link).Error
 }
 
+// CreateLinksBulk 批量创建培养联系人记录（一次事务，避免半成功）。
+// 用于「一次提交 2 位」的业务场景（PRD §4.3.4）。
+func (r *CultivationRepository) CreateLinksBulk(links []models.TyCultivationLink) error {
+	if len(links) == 0 {
+		return nil
+	}
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		return tx.Create(&links).Error
+	})
+}
+
+// CountActiveLinks 统计某申请下当前在任的培养联系人数（含 is_deleted=0）。
+func (r *CultivationRepository) CountActiveLinks(applicationID int64) (int64, error) {
+	var count int64
+	err := r.db.Model(&models.TyCultivationLink{}).
+		Where("application_id = ? AND is_active = 1 AND is_deleted = 0", applicationID).
+		Count(&count).Error
+	return count, err
+}
+
+// CheckMentorInActiveLinks 检查 mentor_student_id 是否已是该申请的在任联系人之一。
+func (r *CultivationRepository) CheckMentorInActiveLinks(applicationID, mentorStudentID int64) (bool, error) {
+	var count int64
+	err := r.db.Model(&models.TyCultivationLink{}).
+		Where("application_id = ? AND mentor_student_id = ? AND is_active = 1 AND is_deleted = 0",
+			applicationID, mentorStudentID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// CountBranchMembers 统计某团支部下的"在册正式团员"人数（status='active'）。
+// 用于「培养联系人优先从支部团员选择」的硬卡控（PRD §4.3.4）。
+func (r *CultivationRepository) CountBranchMembers(branchID int64) (int64, error) {
+	var count int64
+	err := r.db.Model(&models.TyMemberRoster{}).
+		Where("branch_id = ? AND status = 'active' AND is_deleted = 0", branchID).
+		Count(&count).Error
+	return count, err
+}
+
 // UpdateLink 更新培养联系人记录。
 func (r *CultivationRepository) UpdateLink(link *models.TyCultivationLink) error {
 	return r.db.Save(link).Error
