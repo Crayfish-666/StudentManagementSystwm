@@ -368,7 +368,7 @@ import {
   tyThoughtReportApi,
   tyApplicationApi
 } from '@/api/ty'
-import { idxStudentApi } from '@/api/idx'
+import { studentApi as idxStudentApi } from '@/api/idx'
 import { formatDateTime, formatDate } from '@/utils/datetime'
 import { useAuthStore } from '@/stores/auth'
 

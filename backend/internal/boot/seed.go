@@ -392,7 +392,7 @@ func SeedMenus(db *gorm.DB, zlog *zap.Logger) {
 		{Code: "cmp-ranking", Title: "综合分排行", Icon: "", Path: "/cmp/ranking", Component: "views/cmp/ScoreRanking.vue", Sort: 2, Roles: string(adminRoles)},
 
 		// 我的申请 子菜单
-		{Code: "mine-development", Title: "我的团员发展", Icon: "", Path: "/mine/ty-development", Component: "views/ty/MyDevelopment.vue", Sort: 1, Roles: allRoles},
+		{Code: "mine-ty-development", Title: "我的团员发展", Icon: "", Path: "/mine/ty-development", Component: "views/ty/MyDevelopment.vue", Sort: 1, Roles: allRoles},
 		{Code: "mine-application", Title: "我的入团申请", Icon: "", Path: "/mine/ty-application", Component: "views/ty/ApplicationList.vue", Sort: 2, Roles: allRoles},
 		{Code: "mine-thought-report", Title: "我的思想汇报", Icon: "", Path: "/mine/thought-report", Component: "views/ty/MyThoughtReport.vue", Sort: 3, Roles: allRoles},
 		{Code: "mine-activity", Title: "我的社团", Icon: "", Path: "/mine/activity", Component: "views/st/ActivityList.vue", Sort: 4, Roles: allRoles},
