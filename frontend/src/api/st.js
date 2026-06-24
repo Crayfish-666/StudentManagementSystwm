@@ -99,3 +99,63 @@ export const stActivityApi = {
     return http.get(`/st/activities/${id}/summary`)
   }
 }
+
+// 招新计划 API
+export const stRecruitPlanApi = {
+  // 分页查询招新计划
+  list(params) {
+    return http.get('/st/recruit-plans', { params })
+  },
+  // 获取计划详情
+  get(id) {
+    return http.get(`/st/recruit-plans/${id}`)
+  },
+  // 创建招新计划
+  create(data) {
+    return http.post('/st/recruit-plans', data)
+  },
+  // 更新招新计划
+  update(id, data) {
+    return http.put(`/st/recruit-plans/${id}`, data)
+  },
+  // 提交计划（S0 → S1）
+  submit(id) {
+    return http.post(`/st/recruit-plans/${id}/submit`)
+  },
+  // 撤回计划（S1 → S0）
+  withdraw(id) {
+    return http.post(`/st/recruit-plans/${id}/withdraw`)
+  },
+  // 审批通过（S1 → S3）
+  approve(id) {
+    return http.post(`/st/recruit-plans/${id}/approve`)
+  },
+  // 驳回（S1 → S4）
+  reject(id, data) {
+    return http.post(`/st/recruit-plans/${id}/reject`, data)
+  },
+  // 发布
+  publish(id) {
+    return http.post(`/st/recruit-plans/${id}/publish`)
+  },
+  // 提前结束招新（仅 S3 + 未结束可用）
+  finish(id, data) {
+    return http.post(`/st/recruit-plans/${id}/finish`, data || {})
+  }
+}
+
+// 招新申请 API
+export const stRecruitApplyApi = {
+  // 分页查询申请
+  list(params) {
+    return http.get('/st/recruit-applies', { params })
+  },
+  // 学生投递
+  create(data) {
+    return http.post('/st/recruit-applies', data)
+  },
+  // 录入面试结果
+  submitResult(id, data) {
+    return http.post(`/st/recruit-applies/${id}/result`, data)
+  }
+}

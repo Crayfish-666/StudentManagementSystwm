@@ -103,6 +103,25 @@ const staticRoutes = [
         component: () => import('@/views/st/ActivitySummary.vue'),
         meta: { title: '活动总结', requiresAuth: true }
       },
+      // ST 招新计划页面（非菜单路由，由列表页跳转）
+      {
+        path: 'st/recruit-plan/new',
+        name: 'StRecruitPlanCreate',
+        component: () => import('@/views/st/RecruitPlanForm.vue'),
+        meta: { title: '新建招新计划', requiresAuth: true }
+      },
+      {
+        path: 'st/recruit-plan/:id/edit',
+        name: 'StRecruitPlanEdit',
+        component: () => import('@/views/st/RecruitPlanForm.vue'),
+        meta: { title: '编辑招新计划', requiresAuth: true }
+      },
+      {
+        path: 'st/recruit-plan/:id',
+        name: 'StRecruitPlanDetail',
+        component: () => import('@/views/st/RecruitPlanDetail.vue'),
+        meta: { title: '招新计划详情', requiresAuth: true }
+      },
       // 通知中心
       {
         path: 'notifications',
@@ -179,6 +198,8 @@ const staticRoutes = [
       // ST 社团活动
       { path: 'st', name: 'StHome', component: () => import('@/views/st/AssociationList.vue'), meta: { title: '社团活动', requiresAuth: true } },
       { path: 'st/association', name: 'StAssociation', component: () => import('@/views/st/AssociationList.vue'), meta: { title: '社团管理', requiresAuth: true } },
+      { path: 'st/recruit-plan', name: 'StRecruitPlan', component: () => import('@/views/st/RecruitPlanList.vue'), meta: { title: '招新计划', requiresAuth: true } },
+      { path: 'st/recruit-apply', name: 'StRecruitApply', component: () => import('@/views/st/RecruitApplyList.vue'), meta: { title: '招新申请', requiresAuth: true } },
       { path: 'st/activity', name: 'StActivity', component: () => import('@/views/st/ActivityList.vue'), meta: { title: '活动管理', requiresAuth: true } },
       // SQ 学生社区
       { path: 'sq', name: 'SqHome', component: () => import('@/views/sq/InspectionList.vue'), meta: { title: '学生社区', requiresAuth: true } },
