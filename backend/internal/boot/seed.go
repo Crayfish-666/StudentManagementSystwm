@@ -354,7 +354,7 @@ func SeedMenus(db *gorm.DB, zlog *zap.Logger) {
 		// 一级菜单
 		{Code: "dashboard", Title: "工作台", Icon: "Odometer", Path: "/dashboard", Component: "views/Dashboard.vue", Sort: 1, Roles: allRoles},
 		{Code: "ty", Title: "团员发展", Icon: "Flag", Path: "/ty", Sort: 2, Roles: string(adminRoles)},
-		{Code: "st", Title: "社团活动", Icon: "Trophy", Path: "/st", Sort: 3, Roles: string(adminRoles)},
+		{Code: "st", Title: "社团活动", Icon: "Trophy", Path: "/st", Sort: 3, Roles: "R-SY-ADMIN,R-SY-LEAGUE,R-SY-AFFAIRS,R-COL-LEAGUE,R-COL-COUN,R-STU-NORM"},
 		{Code: "sq", Title: "学生社区", Icon: "House", Path: "/sq", Sort: 4, Roles: string(adminRoles)},
 		{Code: "qg", Title: "勤工助学", Icon: "Briefcase", Path: "/qg", Sort: 5, Roles: string(adminRoles)},
 		{Code: "cmp", Title: "综合看板", Icon: "DataAnalysis", Path: "/cmp", Sort: 6, Roles: string(adminRoles)},
@@ -375,7 +375,9 @@ func SeedMenus(db *gorm.DB, zlog *zap.Logger) {
 
 		// ST 子菜单
 		{Code: "st-association", Title: "社团管理", Icon: "", Path: "/st/association", Component: "views/st/AssociationList.vue", Sort: 1, Roles: string(adminRoles)},
-		{Code: "st-activity", Title: "活动管理", Icon: "", Path: "/st/activity", Component: "views/st/ActivityList.vue", Sort: 2, Roles: string(adminRoles)},
+		{Code: "st-recruit-plan", Title: "招新计划", Icon: "", Path: "/st/recruit-plan", Component: "views/st/RecruitPlanList.vue", Sort: 2, Roles: string(adminRoles)},
+		{Code: "st-recruit-apply", Title: "招新申请", Icon: "", Path: "/st/recruit-apply", Component: "views/st/RecruitApplyList.vue", Sort: 3, Roles: "R-STU-NORM"},
+		{Code: "st-activity", Title: "活动管理", Icon: "", Path: "/st/activity", Component: "views/st/ActivityList.vue", Sort: 4, Roles: string(adminRoles)},
 
 		// SQ 子菜单
 		{Code: "sq-building", Title: "楼栋管理", Icon: "", Path: "/sq/building", Component: "views/sq/BuildingTree.vue", Sort: 1, Roles: string(adminRoles)},

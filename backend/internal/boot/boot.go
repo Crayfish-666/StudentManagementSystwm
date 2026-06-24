@@ -78,7 +78,7 @@ type JWTConfig struct {
 func defaultConfig() *Config {
 	return &Config{
 		Env:    getEnv("APP_ENV", "dev"),
-		Port:   getEnvInt("APP_PORT", 18080),
+		Port:   getEnvInt("APP_PORT", 8080),
 		DBPath: filepath.Join("data", "studenthub.db"),
 		JWT: JWTConfig{
 			Secret:     getEnv("JWT_SECRET", "studenthub-dev-jwt-secret-change-in-prod"),
@@ -285,10 +285,13 @@ func buildRouter(cfg *Config, db *gorm.DB, zlog *zap.Logger, cache *cachex.Cache
 	// 初始化 ST 模块
 	stAssocRepo := strepo.NewAssociationRepository(db)
 	stActRepo := strepo.NewActivityRepository(db)
+	stRecRepo := strepo.NewRecruitRepository(db)
 	stAssocSvc := stservice.NewAssociationService(stAssocRepo, db, bus)
 	stActSvc := stservice.NewActivityService(stActRepo, db, bus)
+	stRecSvc := stservice.NewRecruitService(stRecRepo, db, bus)
 	stAssocHandler := stapi.NewAssociationHandler(stAssocSvc)
 	stActHandler := stapi.NewActivityHandler(stActSvc)
+	stRecHandler := stapi.NewRecruitHandler(stRecSvc)
 
 	// 初始化 SQ 模块
 	sqBuildingRepo := sqrepo.NewBuildingRepository(db)
@@ -404,6 +407,7 @@ func buildRouter(cfg *Config, db *gorm.DB, zlog *zap.Logger, cache *cachex.Cache
 	// ST 路由（受保护）
 	stAssocHandler.RegisterRoutes(protected, adminOnly)
 	stActHandler.RegisterRoutes(protected, adminOnly)
+	stRecHandler.RegisterRoutes(protected, adminOnly)
 
 	// SQ 路由（受保护）
 	sqBuildingHandler.RegisterRoutes(protected, adminOnly)

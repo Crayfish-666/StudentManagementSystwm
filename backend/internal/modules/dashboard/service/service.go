@@ -42,10 +42,11 @@ type RoleItem struct {
 // StatsView 统计数据（字段按角色动态填充，未使用的为 0）。
 type StatsView struct {
 	// 学生视角
-	MyTyStatus       string `json:"my_ty_status"`        // 我的入团状态：none / applying / cultivating / member
-	MyCmpScore       int64  `json:"my_cmp_score"`         // 我的综合分（最近学期）
-	MyActivityCount  int64  `json:"my_activity_count"`    // 我参加的活动数
-	UnreadNotiCount  int64  `json:"unread_noti_count"`    // 未读通知
+	MyTyStatus            string `json:"my_ty_status"`            // 我的入团状态：none / applying / cultivating / member
+	MyCmpScore            int64  `json:"my_cmp_score"`            // 我的综合分（最近学期）
+	MyActivityCount       int64  `json:"my_activity_count"`       // 我参加的活动数
+	UnreadNotiCount       int64  `json:"unread_noti_count"`       // 未读通知
+	RecruitingPlanCount   int64  `json:"recruiting_plan_count"`   // 招新中计划数（st_recruit_plan.status='S3' AND is_finished=0）
 
 	// 教师视角
 	StudentCount       int64 `json:"student_count"`        // 管辖学生数
@@ -133,6 +134,11 @@ func (s *DashboardService) buildStudentView(view *OverviewView, user *models.Sys
 			Where("student_id = ? AND is_deleted = 0", *user.StudentID).
 			Count(&view.Stats.MyActivityCount)
 	}
+
+	// 招新中计划数：status=S3（已通过/可投递）且 is_finished=0（招新中）
+	s.db.Table("st_recruit_plan").
+		Where("status = ? AND is_finished = 0 AND is_deleted = 0", "S3").
+		Count(&view.Stats.RecruitingPlanCount)
 
 	// 待办：我的入团申请进度、未读通知
 	view.TodoItems = []TodoItem{}
