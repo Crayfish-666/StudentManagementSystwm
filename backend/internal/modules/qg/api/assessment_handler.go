@@ -81,6 +81,64 @@ func (h *AssessmentHandler) GetAssess(c *gin.Context) {
 	response.OK(c, assess)
 }
 
+// ConfirmAssess 确认月度考核（S1 → S3）。POST /api/v1/qg/monthly-assessments/:id/confirm
+func (h *AssessmentHandler) ConfirmAssess(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, 40002, "无效的考核 ID")
+		return
+	}
+
+	uid, _ := c.Get("uid")
+	userID, _ := uid.(int64)
+	uname, _ := c.Get("user_name")
+	userName, _ := uname.(string)
+	rolesAny, _ := c.Get("user_roles")
+	roles, _ := rolesAny.([]string)
+	role := ""
+	if len(roles) > 0 {
+		role = roles[0]
+	}
+	ip := c.ClientIP()
+	ua := c.GetHeader("User-Agent")
+
+	assess, err := h.svc.ConfirmAssessment(id, userID, userName, role, ip, ua)
+	if err != nil {
+		msg := err.Error()
+		code := 1500
+		if msg == "考核记录不存在" {
+			code = 1404
+		}
+		response.Fail(c, code, msg)
+		return
+	}
+	response.OK(c, assess)
+}
+
+// PreviewAttendance 出勤分预览（不写库）。GET /api/v1/qg/monthly-assessments/attendance-preview
+// 综合分保持人工输入，本接口仅计算出勤分。前端在"创建月度考核"对话框中，
+// 用户选定 apply_id + 年月后自动调用,把结果回填"出勤分"输入框。
+func (h *AssessmentHandler) PreviewAttendance(c *gin.Context) {
+	applyID, err := strconv.ParseInt(c.Query("apply_id"), 10, 64)
+	if err != nil || applyID <= 0 {
+		response.Fail(c, 40001, "缺少或非法的 apply_id")
+		return
+	}
+	year, _ := strconv.Atoi(c.Query("year"))
+	month, _ := strconv.Atoi(c.Query("month"))
+	if year < 1900 || month < 1 || month > 12 {
+		response.Fail(c, 40001, "缺少或非法的 year/month")
+		return
+	}
+
+	preview, err := h.svc.PreviewAttendance(applyID, year, month)
+	if err != nil {
+		response.Fail(c, 1500, err.Error())
+		return
+	}
+	response.OK(c, preview)
+}
+
 // ComputePayroll 计算薪酬。POST /api/v1/qg/payrolls/compute
 func (h *AssessmentHandler) ComputePayroll(c *gin.Context) {
 	var req struct {
@@ -194,7 +252,9 @@ func (h *AssessmentHandler) RegisterRoutes(rg *gin.RouterGroup, _ gin.HandlerFun
 		// 月度考核
 		qg.POST("/monthly-assessments", h.CreateAssessment)
 		qg.GET("/monthly-assessments", h.ListAssess)
+		qg.GET("/monthly-assessments/attendance-preview", h.PreviewAttendance)
 		qg.GET("/monthly-assessments/:id", h.GetAssess)
+		qg.POST("/monthly-assessments/:id/confirm", h.ConfirmAssess)
 
 		// 薪酬
 		qg.POST("/payrolls/compute", h.ComputePayroll)

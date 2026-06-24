@@ -83,7 +83,8 @@ type MonthlySummaryView struct {
 // ---- 业务方法 ----
 
 // List 分页查询工时打卡列表。
-func (s *AttendanceService) List(applyID, studentID int64, positionTitle, dateFrom, dateTo string, page, pageSize int) (*AttendanceListResult, error) {
+// studentKeyword 支持学号 / 姓名 / 数字主键三合一查询;空字符串表示不过滤。
+func (s *AttendanceService) List(applyID, studentID int64, studentKeyword, positionTitle, dateFrom, dateTo string, page, pageSize int) (*AttendanceListResult, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -112,7 +113,7 @@ func (s *AttendanceService) List(applyID, studentID int64, positionTitle, dateFr
 		toTime = &t
 	}
 
-	records, total, err := s.repo.List(applyID, studentID, positionTitle, fromTime, toTime, page, pageSize)
+	records, total, err := s.repo.List(applyID, studentID, studentKeyword, positionTitle, fromTime, toTime, page, pageSize)
 	if err != nil {
 		return nil, err
 	}

@@ -23,6 +23,11 @@ func (c *ctx) seedQG() error {
 	if err := c.seedQgPositionApply(); err != nil {
 		return err
 	}
+	// 先回填历史工时记录缺失的 biz_no（早期种子数据未生成编号），
+	// 再执行常规灌入，避免新生成编号与历史冲突。
+	if err := c.backfillQgAttendanceBizNo(); err != nil {
+		return err
+	}
 	if err := c.seedQgAttendance(); err != nil {
 		return err
 	}
@@ -275,6 +280,7 @@ func (c *ctx) seedQgAttendance() error {
 		}
 
 		att := models.QgAttendance{
+			BizNo:          nextBizNo(c.db, "QG"),
 			ApplyID:        app.ID,
 			StudentID:      app.StudentID,
 			WorkDate:       workDate,
@@ -300,6 +306,29 @@ func (c *ctx) seedQgAttendance() error {
 		}
 	}
 	fmt.Printf("    [OK] 打卡 新增 %d 条\n", created)
+	return nil
+}
+
+// backfillQgAttendanceBizNo 回填历史工时记录缺失的 biz_no。
+// 早期版本种子数据未生成编号，导致前端"业务编号"列为空。
+// 这里只补 NULL/空串的记录，已存在的编号不动。
+func (c *ctx) backfillQgAttendanceBizNo() error {
+	var rows []models.QgAttendance
+	if err := c.db.Where("biz_no IS NULL OR biz_no = ''").Find(&rows).Error; err != nil {
+		return fmt.Errorf("查询待回填工时失败: %w", err)
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+	fmt.Printf("  qg_attendance 回填 biz_no %d 条\n", len(rows))
+	for i := range rows {
+		rows[i].BizNo = nextBizNo(c.db, "QG")
+		if err := c.db.Model(&models.QgAttendance{}).
+			Where("id = ?", rows[i].ID).
+			Update("biz_no", rows[i].BizNo).Error; err != nil {
+			return fmt.Errorf("回填工时 biz_no(id=%d) 失败: %w", rows[i].ID, err)
+		}
+	}
 	return nil
 }
 

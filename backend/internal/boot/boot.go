@@ -309,7 +309,7 @@ func buildRouter(cfg *Config, db *gorm.DB, zlog *zap.Logger, cache *cachex.Cache
 	qgDiffSvc := qgservice.NewDifficultyService(qgDiffRepo, db, bus)
 	qgPosSvc := qgservice.NewPositionService(qgPosRepo, db, bus)
 	qgAttendSvc := qgservice.NewAttendanceService(qgAttendRepo, db)
-	qgAssessSvc := qgservice.NewAssessmentService(qgAssessRepo, db)
+	qgAssessSvc := qgservice.NewAssessmentService(qgAssessRepo, db, bus)
 	qgDiffHandler := qgapi.NewDifficultyHandler(qgDiffSvc)
 	qgPosHandler := qgapi.NewPositionHandler(qgPosSvc)
 	qgAttendHandler := qgapi.NewAttendanceHandler(qgAttendSvc)

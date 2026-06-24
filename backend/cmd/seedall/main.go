@@ -266,6 +266,7 @@ func (c *ctx) syncBizSeq() {
 		{"SQ", "sq_incident", "biz_no"},
 		{"SQ", "sq_assessment", "biz_no"},
 		{"QG", "qg_position", "biz_no"},
+		{"QG", "qg_attendance", "biz_no"},
 		{"QG", "qg_payroll", "biz_no"},
 	}
 	modMax := map[string]int{}

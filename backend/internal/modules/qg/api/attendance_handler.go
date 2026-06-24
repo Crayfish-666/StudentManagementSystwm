@@ -20,6 +20,7 @@ func NewAttendanceHandler(svc *service.AttendanceService) *AttendanceHandler {
 }
 
 // List 查询打卡记录列表。GET /api/v1/qg/attendances
+// 支持 student_keyword 三合一查询（学号 / 姓名 / 学生ID）。
 func (h *AttendanceHandler) List(c *gin.Context) {
 	var applyID, studentID int64
 	if v := c.Query("apply_id"); v != "" {
@@ -28,13 +29,14 @@ func (h *AttendanceHandler) List(c *gin.Context) {
 	if v := c.Query("student_id"); v != "" {
 		studentID, _ = strconv.ParseInt(v, 10, 64)
 	}
+	studentKeyword := c.Query("student_keyword")
 	dateFrom := c.Query("date_from")
 	dateTo := c.Query("date_to")
 	positionTitle := c.Query("position_title")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
-	result, err := h.svc.List(applyID, studentID, positionTitle, dateFrom, dateTo, page, pageSize)
+	result, err := h.svc.List(applyID, studentID, studentKeyword, positionTitle, dateFrom, dateTo, page, pageSize)
 	if err != nil {
 		response.Fail(c, 1500, "查询打卡记录失败")
 		return

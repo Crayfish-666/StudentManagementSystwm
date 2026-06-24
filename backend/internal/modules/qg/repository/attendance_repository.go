@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -20,13 +22,30 @@ func NewAttendanceRepository(db *gorm.DB) *AttendanceRepository {
 
 // List 分页查询工时打卡列表。
 // positionTitle 非空时按岗位标题模糊匹配（join qg_position_apply + qg_position）。
-func (r *AttendanceRepository) List(applyID, studentID int64, positionTitle string, dateFrom, dateTo *time.Time, page, pageSize int) ([]models.QgAttendance, int64, error) {
+// studentKeyword 非空时,纯数字按 student_id 精确匹配,否则 join idx_student
+// 对 student_no / name 模糊匹配,实现"学号 / 姓名 / ID"三合一。
+func (r *AttendanceRepository) List(applyID, studentID int64, studentKeyword, positionTitle string, dateFrom, dateTo *time.Time, page, pageSize int) ([]models.QgAttendance, int64, error) {
 	query := r.db.Where("qg_attendance.is_deleted = 0")
 	if applyID > 0 {
 		query = query.Where("qg_attendance.apply_id = ?", applyID)
 	}
 	if studentID > 0 {
 		query = query.Where("qg_attendance.student_id = ?", studentID)
+	}
+	keyword := strings.TrimSpace(studentKeyword)
+	if keyword != "" {
+		if id, err := strconv.ParseInt(keyword, 10, 64); err == nil && id > 0 {
+			// 纯数字：按 idx_student.id 精确匹配 OR 按学号精确匹配，
+			// 这样学号本身就是纯数字（如 2023002）也能命中。
+			query = query.
+				Joins("JOIN idx_student s ON s.id = qg_attendance.student_id").
+				Where("s.id = ? OR s.student_no = ?", id, keyword)
+		} else {
+			// 关键字：join idx_student，对学号/姓名做模糊匹配
+			query = query.
+				Joins("JOIN idx_student s ON s.id = qg_attendance.student_id").
+				Where("s.student_no LIKE ? OR s.name LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+		}
 	}
 	if positionTitle != "" {
 		query = query.

@@ -1,26 +1,34 @@
 package service
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
 
+	"student-system/internal/eventx"
 	"student-system/internal/idgen"
 	"student-system/internal/models"
 	"student-system/internal/modules/qg/repository"
+	qgsm "student-system/internal/modules/qg/statemachine"
+	"student-system/internal/statem"
 )
 
 // AssessmentService 月度考核+薪酬业务服务层。
 type AssessmentService struct {
 	repo *repository.AssessmentRepository
 	db   *gorm.DB
+	sm   *statem.Engine
+	bus  *eventx.Bus
 }
 
 // NewAssessmentService 创建考核薪酬服务。
-func NewAssessmentService(repo *repository.AssessmentRepository, db *gorm.DB) *AssessmentService {
-	return &AssessmentService{repo: repo, db: db}
+func NewAssessmentService(repo *repository.AssessmentRepository, db *gorm.DB, bus *eventx.Bus) *AssessmentService {
+	return &AssessmentService{repo: repo, db: db, sm: qgsm.NewAssessSM(), bus: bus}
 }
 
 // ---- DTO ----
@@ -125,7 +133,17 @@ var coefficientTextMap = map[float64]string{
 // ---- 考核业务方法 ----
 
 // CreateAssessment 创建月度考核。
+// 唯一性约束：SSOT §8.2.7 规定 UNIQUE(apply_id, assess_year, assess_month)。
+// 这里先做存在性预检,并在 INSERT 后兜底捕获 UNIQUE 索引冲突,统一返回业务错误 "考核已存在"，
+// 由 Handler 映射为 40905 错误码。
 func (s *AssessmentService) CreateAssessment(userID int64, req *CreateAssessmentRequest) (*AssessmentView, error) {
+	// 预检:同 apply + 年月 已有记录则拒绝
+	if existing, err := s.repo.GetAssessmentByApplyAndMonth(req.ApplyID, req.AssessYear, req.AssessMonth); err == nil && existing != nil {
+		return nil, fmt.Errorf("考核已存在")
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("查询考核是否已存在失败: %w", err)
+	}
+
 	// 计算加权得分
 	weightedScore := float64(req.ScoreAttendance)*0.4 + float64(req.ScoreWorkComplete)*0.4 + float64(req.ScoreComprehensive)*0.2
 	weightedScore = math.Round(weightedScore*100) / 100
@@ -170,10 +188,27 @@ func (s *AssessmentService) CreateAssessment(userID int64, req *CreateAssessment
 	}
 
 	if err := s.repo.CreateAssessment(assess); err != nil {
-		return nil, err
+		// 兜底:并发场景下预检可能漏过,捕获 UNIQUE 索引冲突并转为业务错误。
+		if isUniqueViolation(err) {
+			return nil, fmt.Errorf("考核已存在")
+		}
+		return nil, fmt.Errorf("创建考核记录失败: %w", err)
 	}
 
 	return s.GetAssess(assess.ID)
+}
+
+// isUniqueViolation 判断 GORM/SQLite 错误是否为 UNIQUE 约束冲突。
+// SQLite 错误格式: "UNIQUE constraint failed: <table>.<col>, ..."
+func isUniqueViolation(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return true
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "UNIQUE constraint failed") || strings.Contains(msg, "Duplicate entry")
 }
 
 // ListAssess 分页查询考核列表。
@@ -213,6 +248,69 @@ func (s *AssessmentService) GetAssess(id int64) (*AssessmentView, error) {
 
 	v := s.toAssessView(*assess)
 	return &v, nil
+}
+
+// ConfirmAssessment 确认月度考核（S1 → S3）。
+// 仅 S1(待确认) 允许被确认；S3(已确认) 重复确认会被状态机阻断并返回业务错误。
+// 状态变更走 statem.Engine.Apply，持久化与 event_log 写入在同一事务内。
+func (s *AssessmentService) ConfirmAssessment(id, userID int64, actorName, actorRole, ip, ua string) (*AssessmentView, error) {
+	assess, err := s.repo.GetAssessmentByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("考核记录不存在")
+	}
+
+	from := assess.Status
+	to, err := s.sm.Apply(&statem.BizCtx{
+		Ctx:       context.Background(),
+		ActorID:   userID,
+		ActorName: actorName,
+		ActorRole: actorRole,
+		IP:        ip,
+		UA:        ua,
+	}, from, qgsm.ActionConfirm)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
+		assess.Status = to
+		return tx.Save(assess).Error
+	}); err != nil {
+		return nil, fmt.Errorf("更新考核状态失败: %w", err)
+	}
+
+	s.publishAssessEvent(assess, "QgMonthlyAssessConfirmed", userID, actorRole, ip, ua, map[string]interface{}{
+		"from": from,
+		"to":   to,
+	})
+
+	return s.GetAssess(id)
+}
+
+// publishAssessEvent 发布月度考核领域事件到 event_log。
+func (s *AssessmentService) publishAssessEvent(assess *models.QgMonthlyAssess, evtType string, actorID int64, actorRole, ip, ua string, payload map[string]interface{}) {
+	if s.bus == nil {
+		return
+	}
+	if payload == nil {
+		payload = map[string]interface{}{}
+	}
+	payload["assess_id"] = assess.ID
+	payload["biz_no"] = assess.BizNo
+	payload["status"] = assess.Status
+
+	_ = s.bus.Publish(&eventx.Event{
+		Aggregate:   "qg.monthly_assess",
+		AggregateID: assess.BizNo,
+		EventType:   evtType,
+		Module:      "QG",
+		ActorID:     actorID,
+		ActorRole:   actorRole,
+		Payload:     payload,
+		BizNo:       assess.BizNo,
+		IP:          ip,
+		UA:          ua,
+	})
 }
 
 // ---- 薪酬业务方法 ----
@@ -390,6 +488,100 @@ func (s *AssessmentService) PayPayroll(id, userID int64) (*PayrollView, error) {
 }
 
 // ---- 内部方法 ----
+
+// AttendancePreview 出勤分自动计算的预览结果（不写库）。
+// 用于"创建月度考核"对话框实时回填"出勤分"输入框。
+type AttendancePreview struct {
+	ShouldHours     float64 `json:"should_hours"`    // 标准工时（小时）= weekly_hours_limit × 4
+	ActualHours     float64 `json:"actual_hours"`    // 实出勤工时（小时）= sum(qg_attendance.effective_hours)
+	OnBoardAt       string  `json:"on_board_at"`     // 学生实际上岗日期（YYYY-MM-DD）
+	ScoreAttendance int     `json:"score_attendance"` // 计算出的出勤分（0-100）
+	Formula         string  `json:"formula"`         // 公式说明
+}
+
+// PreviewAttendance 计算某 apply 在某年某月的出勤分预览。
+// 算法：出勤分 = round(实出勤工时 / 标准工时 × 100), 封顶 100。
+//   - 标准工时 = qg_position.weekly_hours_limit × 4（约 4 周一月）
+//   - 实出勤工时 = sum(qg_attendance.effective_hours), 当月, is_deleted=0
+//   - 兼职/寒暑假标准工时由岗位表的 weekly_hours_limit 决定（V1 简化）
+//   - 综合分保持人工输入，本接口不计算
+func (s *AssessmentService) PreviewAttendance(applyID int64, year, month int) (*AttendancePreview, error) {
+	apply, err := s.repo.GetApplyByID(applyID)
+	if err != nil {
+		return nil, fmt.Errorf("岗位申请记录不存在")
+	}
+	if month < 1 || month > 12 || year < 1900 {
+		return nil, fmt.Errorf("年月参数非法")
+	}
+
+	// 标准工时（来自岗位周工时上限 × 4）
+	pos, err := s.repo.GetPositionByApplyID(applyID)
+	if err != nil || pos == nil {
+		return nil, fmt.Errorf("岗位信息不存在")
+	}
+	weeklyHours := pos.WeeklyHoursLimit
+	if weeklyHours <= 0 {
+		weeklyHours = 10 // 兜底: 岗位未配周工时上限时按 10h/周(40h/月)
+	}
+	shouldHours := float64(weeklyHours) * 4
+
+	// 实出勤工时
+	actualHours, err := s.repo.SumEffectiveHoursByApplyAndMonth(applyID, year, month)
+	if err != nil {
+		return nil, fmt.Errorf("统计实出勤工时失败: %w", err)
+	}
+
+	score := 0
+	if shouldHours > 0 {
+		score = int(math.Round(actualHours / shouldHours * 100))
+		if score > 100 {
+			score = 100
+		}
+		if score < 0 {
+			score = 0
+		}
+	}
+
+	onBoardStr := ""
+	if apply.OnBoardAt != nil {
+		onBoardStr = apply.OnBoardAt.Format("2006-01-02")
+	}
+
+	return &AttendancePreview{
+		ShouldHours:     shouldHours,
+		ActualHours:     actualHours,
+		OnBoardAt:       onBoardStr,
+		ScoreAttendance: score,
+		Formula:         fmt.Sprintf("实出勤工时 / 标准工时(每周上限 %dh × 4 周 ≈ %dh) × 100(封顶 100)", weeklyHours, int(shouldHours)),
+	}, nil
+}
+
+// countWorkdays 统计 [start, end) 区间内周一~五的天数(半开区间)。
+// 保留以备其他业务复用;当前 PreviewAttendance 已改用"工时制"算法。
+func countWorkdays(start, end time.Time) int {
+	if !end.After(start) {
+		return 0
+	}
+	count := 0
+	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
+		wd := d.Weekday()
+		if wd >= time.Monday && wd <= time.Friday {
+			count++
+		}
+	}
+	return count
+}
+
+// monthRange 返回 [月初, 下月初) 的半开区间。
+// year/month 非法时返回两个零时间。
+func monthRange(year, month int) (time.Time, time.Time) {
+	if year < 1900 || month < 1 || month > 12 {
+		return time.Time{}, time.Time{}
+	}
+	first := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	last := first.AddDate(0, 1, 0)
+	return first, last
+}
 
 func (s *AssessmentService) toAssessView(a models.QgMonthlyAssess) AssessmentView {
 	v := AssessmentView{

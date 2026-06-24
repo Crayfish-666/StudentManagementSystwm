@@ -81,6 +81,40 @@ func (r *PositionRepository) GetApplyByID(id int64) (*models.QgPositionApply, er
 	return &apply, nil
 }
 
+// ListApplies 分页查询岗位申请列表。
+// status 非空时按在岗状态过滤（如 "on_job"）；
+// keyword 非空时 join qg_position + idx_student,对岗位标题 / 学生姓名 / 学号做模糊匹配。
+// 用于前端"下拉选择器"取数,避免用户记数据库主键。
+func (r *PositionRepository) ListApplies(status, keyword string, page, pageSize int) ([]models.QgPositionApply, int64, error) {
+	query := r.db.Where("qg_position_apply.is_deleted = 0")
+	if status != "" {
+		query = query.Where("qg_position_apply.status = ?", status)
+	}
+	if keyword != "" {
+		query = query.
+			Joins("JOIN qg_position ON qg_position.id = qg_position_apply.position_id").
+			Joins("JOIN idx_student ON idx_student.id = qg_position_apply.student_id").
+			Where("qg_position.title LIKE ? OR idx_student.name LIKE ? OR idx_student.student_no LIKE ?",
+				"%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
+	}
+
+	var total int64
+	if err := query.Model(&models.QgPositionApply{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var applies []models.QgPositionApply
+	offset := (page - 1) * pageSize
+	if err := query.
+		Order("qg_position_apply.id DESC").
+		Offset(offset).Limit(pageSize).
+		Find(&applies).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return applies, total, nil
+}
+
 // CreateApply 创建岗位申请。
 func (r *PositionRepository) CreateApply(apply *models.QgPositionApply) error {
 	return r.db.Create(apply).Error

@@ -292,6 +292,22 @@ func (h *PositionHandler) GetApply(c *gin.Context) {
 	response.OK(c, apply)
 }
 
+// ListApplies 分页查询岗位申请列表。GET /api/v1/qg/applies
+// 用于前端"下拉选择器"取数,避免用户记数据库主键。
+func (h *PositionHandler) ListApplies(c *gin.Context) {
+	status := c.Query("status")
+	keyword := strings.TrimSpace(c.Query("keyword"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "50"))
+
+	result, err := h.svc.ListApplies(status, keyword, page, pageSize)
+	if err != nil {
+		response.Fail(c, 1500, "查询岗位申请列表失败")
+		return
+	}
+	response.OK(c, result)
+}
+
 // RegisterRoutes 注册岗位相关路由。
 func (h *PositionHandler) RegisterRoutes(rg *gin.RouterGroup, _ gin.HandlerFunc) {
 	qg := rg.Group("/qg")
@@ -307,6 +323,7 @@ func (h *PositionHandler) RegisterRoutes(rg *gin.RouterGroup, _ gin.HandlerFunc)
 
 		// 岗位申请
 		qg.POST("/applies", h.Apply)
+		qg.GET("/applies", h.ListApplies)
 		qg.GET("/applies/:id", h.GetApply)
 		qg.POST("/applies/:id/accept", h.AcceptApply)
 		qg.POST("/applies/:id/confirm", h.ConfirmApply)

@@ -444,6 +444,42 @@ func (s *PositionService) GetApply(id int64) (*ApplyView, error) {
 	return &v, nil
 }
 
+// ApplyListResult 岗位申请列表结果。
+type ApplyListResult struct {
+	Items    []ApplyView `json:"items"`
+	Total    int64       `json:"total"`
+	Page     int         `json:"page"`
+	PageSize int         `json:"page_size"`
+}
+
+// ListApplies 分页查询岗位申请列表（前端下拉选择器取数）。
+// status 可选,如 "on_job";keyword 可对岗位标题 / 学生姓名 / 学号做模糊匹配。
+func (s *PositionService) ListApplies(status, keyword string, page, pageSize int) (*ApplyListResult, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 50
+	}
+
+	applies, total, err := s.repo.ListApplies(status, keyword, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]ApplyView, 0, len(applies))
+	for _, a := range applies {
+		items = append(items, s.toApplyView(a))
+	}
+
+	return &ApplyListResult{
+		Items:    items,
+		Total:    total,
+		Page:     page,
+		PageSize: pageSize,
+	}, nil
+}
+
 // ---- 内部方法 ----
 
 func (s *PositionService) toPositionView(pos models.QgPosition) PositionView {

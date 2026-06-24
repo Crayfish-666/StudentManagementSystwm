@@ -18,6 +18,63 @@ func NewAssessmentRepository(db *gorm.DB) *AssessmentRepository {
 	return &AssessmentRepository{db: db}
 }
 
+// CountDistinctWorkDays 统计指定 apply 在某年某月内的去重出勤天数。
+// work_date 当天只算一次,符合"每日 1 条打卡"的设计;跨月记录不计入。
+func (r *AssessmentRepository) CountDistinctWorkDays(applyID int64, year, month int) (int, error) {
+	first, last := monthRange(year, month)
+	if first.IsZero() || last.IsZero() {
+		return 0, nil
+	}
+	var count int64
+	err := r.db.Model(&models.QgAttendance{}).
+		Where("apply_id = ? AND is_deleted = 0", applyID).
+		Where("work_date >= ? AND work_date < ?", first, last).
+		Distinct("work_date").
+		Count(&count).Error
+	return int(count), err
+}
+
+// SumEffectiveHoursByApplyAndMonth 求指定 apply 在某年某月内的有效工时合计(小时)。
+// 用于"出勤分 = 实工时 / 标准工时 × 100"算法。
+func (r *AssessmentRepository) SumEffectiveHoursByApplyAndMonth(applyID int64, year, month int) (float64, error) {
+	first, last := monthRange(year, month)
+	if first.IsZero() || last.IsZero() {
+		return 0, nil
+	}
+	var totalHours float64
+	err := r.db.Model(&models.QgAttendance{}).
+		Where("apply_id = ? AND is_deleted = 0", applyID).
+		Where("work_date >= ? AND work_date < ?", first, last).
+		Select("COALESCE(SUM(effective_hours), 0)").
+		Scan(&totalHours).Error
+	return totalHours, err
+}
+
+// GetPositionByApplyID 通过 apply_id 取得对应岗位信息（含周工时上限 weekly_hours_limit）。
+func (r *AssessmentRepository) GetPositionByApplyID(applyID int64) (*models.QgPosition, error) {
+	var pos models.QgPosition
+	err := r.db.Raw(`
+		SELECT p.* FROM qg_position p
+		JOIN qg_position_apply pa ON pa.position_id = p.id
+		WHERE pa.id = ? AND pa.is_deleted = 0 AND p.is_deleted = 0
+	`, applyID).Scan(&pos).Error
+	if err != nil {
+		return nil, err
+	}
+	return &pos, nil
+}
+
+// monthRange 返回 [月初, 下月初) 的半开区间。
+// month 非法时返回两个零时间,由调用方判断放弃。
+func monthRange(year, month int) (time.Time, time.Time) {
+	if year < 1900 || month < 1 || month > 12 {
+		return time.Time{}, time.Time{}
+	}
+	first := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	last := first.AddDate(0, 1, 0)
+	return first, last
+}
+
 // ---- 考核 ----
 
 // CreateAssessment 创建考核记录。
