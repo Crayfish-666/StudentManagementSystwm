@@ -157,7 +157,7 @@ func (h *AssociationHandler) ListMembers(c *gin.Context) {
 	response.OK(c, gin.H{"items": members})
 }
 
-// ListUsers 查询用户列表（指导教师下拉用）。GET /api/v1/st/users
+// ListUsers 查询用户列表(指导教师下拉用,仅教职工)。GET /api/v1/st/users
 func (h *AssociationHandler) ListUsers(c *gin.Context) {
 	users, err := h.svc.ListUsers()
 	if err != nil {
@@ -165,6 +165,16 @@ func (h *AssociationHandler) ListUsers(c *gin.Context) {
 		return
 	}
 	response.OK(c, gin.H{"items": users})
+}
+
+// ListStudents 查询学生列表(社长下拉用)。GET /api/v1/st/students
+func (h *AssociationHandler) ListStudents(c *gin.Context) {
+	students, err := h.svc.ListStudents()
+	if err != nil {
+		response.Fail(c, 1500, "查询学生列表失败")
+		return
+	}
+	response.OK(c, gin.H{"items": students})
 }
 
 // RegisterRoutes 注册社团相关路由。
@@ -179,5 +189,6 @@ func (h *AssociationHandler) RegisterRoutes(rg *gin.RouterGroup, _ gin.HandlerFu
 		st.GET("/associations/:id/founders", h.ListFounders)
 		st.GET("/associations/:id/members", h.ListMembers)
 		st.GET("/users", h.ListUsers)
+		st.GET("/students", h.ListStudents)
 	}
 }

@@ -154,11 +154,23 @@ func (r *AssociationRepository) ListColleges() ([]models.SysCollege, error) {
 	return colleges, nil
 }
 
-// ListUsers 查询用户列表（用于指导教师下拉）。
+// ListUsers 查询用户列表(用于指导教师下拉)。
+// 仅返回教职工身份:sys_user.student_id IS NULL 即为教职工(辅导员/社团指导教师等)。
 func (r *AssociationRepository) ListUsers() ([]models.SysUser, error) {
 	var users []models.SysUser
-	if err := r.db.Where("is_deleted = 0").Order("id ASC").Find(&users).Error; err != nil {
+	if err := r.db.Where("is_deleted = 0 AND student_id IS NULL").
+		Order("id ASC").Find(&users).Error; err != nil {
 		return nil, err
 	}
 	return users, nil
+}
+
+// ListStudents 查询学生列表(用于社长下拉)。
+func (r *AssociationRepository) ListStudents() ([]models.IdxStudent, error) {
+	var students []models.IdxStudent
+	if err := r.db.Select("id, student_no, name").Where("is_deleted = 0").
+		Order("student_no ASC").Find(&students).Error; err != nil {
+		return nil, err
+	}
+	return students, nil
 }

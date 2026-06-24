@@ -56,19 +56,21 @@ type AssociationView struct {
 
 // CreateAssociationRequest 创建社团请求。
 type CreateAssociationRequest struct {
-	Name          string  `json:"name" binding:"required"`
-	CollegeID     int64   `json:"college_id" binding:"required"`
-	TutorUserID   *int64  `json:"tutor_user_id"`
-	BusinessScope string  `json:"business_scope" binding:"required"`
-	Founders      []int64 `json:"founders" binding:"required"`
+	Name               string  `json:"name" binding:"required"`
+	CollegeID          int64   `json:"college_id" binding:"required"`
+	TutorUserID        *int64  `json:"tutor_user_id"`
+	PresidentStudentID *int64  `json:"president_student_id"`
+	BusinessScope      string  `json:"business_scope" binding:"required"`
+	Founders           []int64 `json:"founders" binding:"required"`
 }
 
 // UpdateAssociationRequest 更新社团请求。
 type UpdateAssociationRequest struct {
-	Name          *string `json:"name"`
-	CollegeID     *int64  `json:"college_id"`
-	TutorUserID   *int64  `json:"tutor_user_id"`
-	BusinessScope *string `json:"business_scope"`
+	Name               *string `json:"name"`
+	CollegeID          *int64  `json:"college_id"`
+	TutorUserID        *int64  `json:"tutor_user_id"`
+	PresidentStudentID *int64  `json:"president_student_id"`
+	BusinessScope      *string `json:"business_scope"`
 }
 
 // FounderView 发起人视图。
@@ -196,15 +198,16 @@ func (s *AssociationService) Create(userID int64, req *CreateAssociationRequest)
 
 	// 事务：创建社团 + 创建发起人记录
 	assoc := &models.StAssociation{
-		BizNo:         bizNo,
-		Name:          req.Name,
-		CollegeID:     req.CollegeID,
-		TutorUserID:   req.TutorUserID,
-		BusinessScope: req.BusinessScope,
-		Status:        "preparing",
-		FoundedAt:     &now,
-		CreatedBy:     &userID,
-		UpdatedBy:     &userID,
+		BizNo:              bizNo,
+		Name:               req.Name,
+		CollegeID:          req.CollegeID,
+		TutorUserID:        req.TutorUserID,
+		PresidentStudentID: req.PresidentStudentID,
+		BusinessScope:      req.BusinessScope,
+		Status:             "preparing",
+		FoundedAt:          &now,
+		CreatedBy:          &userID,
+		UpdatedBy:          &userID,
 	}
 
 	if err := s.db.Transaction(func(tx *gorm.DB) error {
@@ -280,6 +283,9 @@ func (s *AssociationService) Update(id, userID int64, req *UpdateAssociationRequ
 	if req.TutorUserID != nil {
 		assoc.TutorUserID = req.TutorUserID
 	}
+	if req.PresidentStudentID != nil {
+		assoc.PresidentStudentID = req.PresidentStudentID
+	}
 	if req.BusinessScope != nil {
 		assoc.BusinessScope = *req.BusinessScope
 	}
@@ -351,7 +357,7 @@ func (s *AssociationService) ListMembers(associationID int64) ([]MemberView, err
 	return views, nil
 }
 
-// ListUsers 查询用户列表（用于指导教师下拉）。
+// ListUsers 查询用户列表(用于指导教师下拉,仅教职工)。
 func (s *AssociationService) ListUsers() ([]map[string]interface{}, error) {
 	users, err := s.repo.ListUsers()
 	if err != nil {
@@ -362,6 +368,23 @@ func (s *AssociationService) ListUsers() ([]map[string]interface{}, error) {
 		result = append(result, map[string]interface{}{
 			"id":           u.ID,
 			"display_name": u.DisplayName,
+		})
+	}
+	return result, nil
+}
+
+// ListStudents 查询学生列表(用于社长下拉)。
+func (s *AssociationService) ListStudents() ([]map[string]interface{}, error) {
+	students, err := s.repo.ListStudents()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]map[string]interface{}, 0, len(students))
+	for _, st := range students {
+		result = append(result, map[string]interface{}{
+			"id":         st.ID,
+			"student_no": st.StudentNo,
+			"name":       st.Name,
 		})
 	}
 	return result, nil
