@@ -87,6 +87,7 @@ export const tyCultivationRecordApi = {
 export const tyCourseRecordApi = {
   list(params) { return http.get('/ty/course-records', { params }) },
   create(data) { return http.post('/ty/course-records', data) },
+  update(id, data) { return http.put(`/ty/course-records/${id}`, data) },
   updatePassStatus(id) { return http.put(`/ty/course-records/${id}/pass`) }
 }
 

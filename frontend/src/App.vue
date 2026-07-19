@@ -309,7 +309,7 @@ body,
   letter-spacing: 0.02em;
 }
 
-/* ── 输入框美化 ── */
+/* ─ 输入框美化 ── */
 .el-input__wrapper {
   border-radius: var(--sh-radius-md) !important;
   transition: box-shadow var(--sh-duration-fast) var(--sh-ease-out) !important;
@@ -319,6 +319,16 @@ body,
 }
 .el-input__wrapper.is-focus {
   box-shadow: 0 0 0 1px var(--sh-primary) inset, 0 0 0 3px rgba(var(--sh-primary-rgb), 0.12) !important;
+}
+/* 排除 el-input-number 内部的 input wrapper，防止数字区域被挤压 */
+.el-input-number .el-input__wrapper {
+  border-radius: 0 !important;
+}
+.el-input-number .el-input__wrapper:hover {
+  box-shadow: none !important;
+}
+.el-input-number .el-input__wrapper.is-focus {
+  box-shadow: none !important;
 }
 
 /* ── 对话框美化 ── */

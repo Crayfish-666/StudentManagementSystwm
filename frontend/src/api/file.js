@@ -4,9 +4,7 @@ import http from './http'
 export const fileApi = {
   // 上传文件（multipart/form-data）
   upload(formData) {
-    return http.post('/files/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    return http.post('/files/upload', formData)
   },
   // 下载文件
   download(key) {
