@@ -231,6 +231,36 @@ func (h *CultivationHandler) UpdatePassStatus(c *gin.Context) {
 	response.OK(c, result)
 }
 
+// UpdateCourse 更新团课记录（成绩、证书编号等）。PUT /api/v1/ty/course-records/:id
+func (h *CultivationHandler) UpdateCourse(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, 40002, "无效的团课记录 ID")
+		return
+	}
+
+	uid, _ := c.Get("uid")
+	userID, _ := uid.(int64)
+
+	var req service.UpdateCourseRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 40001, "参数不完整: "+err.Error())
+		return
+	}
+
+	result, err := h.svc.UpdateCourse(id, userID, &req)
+	if err != nil {
+		msg := err.Error()
+		code := 1500
+		if msg == "团课记录不存在" {
+			code = 1404
+		}
+		response.Fail(c, code, msg)
+		return
+	}
+	response.OK(c, result)
+}
+
 // ==================== 思想汇报接口 ====================
 
 // CreateReport 提交思想汇报。POST /api/v1/ty/thought-reports
@@ -317,6 +347,7 @@ func (h *CultivationHandler) RegisterRoutes(rg *gin.RouterGroup, _ gin.HandlerFu
 		// 团课记录
 		ty.POST("/course-records", h.CreateCourse)
 		ty.GET("/course-records", h.ListCourses)
+		ty.PUT("/course-records/:id", h.UpdateCourse)
 		ty.PUT("/course-records/:id/pass", h.UpdatePassStatus)
 
 		// 思想汇报

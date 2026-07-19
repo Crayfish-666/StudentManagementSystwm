@@ -669,6 +669,65 @@ func (s *CultivationService) UpdatePassStatus(id int64, userID int64) (*CourseVi
 	return view, nil
 }
 
+// UpdateCourseRequest 更新团课记录请求。
+type UpdateCourseRequest struct {
+	Score         *int   `json:"score"`
+	CertificateNo string `json:"certificate_no"`
+	IsPass        *int   `json:"is_pass"`
+}
+
+// UpdateCourse 更新团课记录（成绩、证书编号、结业状态）。
+// 权限：仅管理员/教师可编辑；学生本人不能改。
+func (s *CultivationService) UpdateCourse(id int64, userID int64, req *UpdateCourseRequest) (*CourseView, error) {
+	roles, _ := s.findUserRoles(userID)
+	if !hasAny(roles, "R-SY-ADMIN", "R-SY-LEAGUE", "R-COL-LEAGUE", "R-COL-COUN", "R-STU-LEAGUE") {
+		return nil, fmt.Errorf("仅管理员或教师可编辑团课记录")
+	}
+
+	_, err := s.repo.GetCourseByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("团课记录不存在")
+	}
+
+	updates := map[string]interface{}{}
+	if req.Score != nil {
+		if *req.Score < 0 || *req.Score > 100 {
+			return nil, fmt.Errorf("团课成绩须在 0-100 之间")
+		}
+		updates["score"] = *req.Score
+	}
+	if req.CertificateNo != "" {
+		updates["certificate_no"] = req.CertificateNo
+	}
+	if req.IsPass != nil {
+		updates["is_pass"] = *req.IsPass
+	}
+
+	if len(updates) == 0 {
+		return nil, fmt.Errorf("没有需要更新的字段")
+	}
+
+	if err := s.repo.UpdateCourse(id, updates); err != nil {
+		return nil, fmt.Errorf("更新团课记录失败: %w", err)
+	}
+
+	s.publishCultivationEvent("TyCourseRecordUpdated", userID, map[string]interface{}{
+		"course_id": id,
+	})
+
+	updated, err := s.repo.GetCourseByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	view := s.toCourseView(*updated)
+	if student, err := s.repo.GetStudentByID(updated.StudentID); err == nil {
+		view.StudentName = student.Name
+		view.StudentNo = student.StudentNo
+	}
+	return view, nil
+}
+
 // toCourseView 将团课记录模型转为视图。
 func (s *CultivationService) toCourseView(c models.TyCourseRecord) *CourseView {
 	v := &CourseView{

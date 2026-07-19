@@ -217,10 +217,10 @@ func (s *ApplicationService) Create(userID int64, req *CreateApplicationRequest)
 		return nil, fmt.Errorf("%s", rejectMsg)
 	}
 
-	// 全周期 1 单限制：S0/S1/S2/S4 任意状态未删除记录至多 1 条
+	// 全周期 1 单限制：每名学生终身只能有一条入团申请
 	if has, existing, _ := s.repo.HasActiveApplication(studentID, 0); has {
 		stateText := statusTextMap[existing.Status]
-		return nil, fmt.Errorf("您已存在未完结的入团申请（%s，编号 %s），请先删除或完结后再创建", stateText, existing.BizNo)
+		return nil, fmt.Errorf("每名学生只能提交一次入团申请，您已存在申请记录（%s，编号 %s）", stateText, existing.BizNo)
 	}
 
 	// 生成业务编号

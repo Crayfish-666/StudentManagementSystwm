@@ -212,6 +212,13 @@ func (r *CultivationRepository) UpdateCoursePassStatus(id int64, isPass int) err
 		Update("is_pass", isPass).Error
 }
 
+// UpdateCourse 更新团课记录（成绩、证书编号等）。
+func (r *CultivationRepository) UpdateCourse(id int64, updates map[string]interface{}) error {
+	return r.db.Model(&models.TyCourseRecord{}).
+		Where("id = ? AND is_deleted = 0", id).
+		Updates(updates).Error
+}
+
 // ---- 思想汇报 ----
 
 // CreateReport 创建思想汇报。

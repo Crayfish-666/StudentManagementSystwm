@@ -67,12 +67,12 @@ func (r *ApplicationRepository) HasPending(studentID int64) (bool, error) {
 	return count > 0, nil
 }
 
-// HasActiveApplication 全周期 1 单限制：S06 修复。
-// 同一学生在任意时刻最多存在 1 条未删除的申请单（含 S0 草稿、S1/S2 审批中、S4 驳回）。
-// S3 已通过视为历史不再限制。
+// HasActiveApplication 全周期 1 单限制：每名学生终身只能有一条入团申请。
+// 同一学生在任意时刻最多存在 1 条未删除的申请单（含 S0 草稿、S1/S2 审批中、S3 已通过）。
+// S4 已驳回视为可重新提交，不限制。
 func (r *ApplicationRepository) HasActiveApplication(studentID int64, excludeID int64) (bool, *models.TyApplication, error) {
 	var app models.TyApplication
-	err := r.db.Where("student_id = ? AND is_deleted = 0 AND status <> 'S3'", studentID).
+	err := r.db.Where("student_id = ? AND is_deleted = 0 AND status <> 'S4'", studentID).
 		Where("id <> ?", excludeID).
 		Order("id DESC").
 		First(&app).Error
