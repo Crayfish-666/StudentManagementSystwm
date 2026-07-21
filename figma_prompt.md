@@ -1,389 +1,300 @@
-# StudentHub 页面原型与 Figma 超详细 UI/UX 设计提示词 (Figma Detailed Prompt)
+# StudentHub 页面原型与 Figma 全量页面 UI/UX 设计提示词 (Figma All-Pages Prompt)
 
 > **使用说明**：本提示词用于提交给 Figma AI、Galileo AI、Relume 或 UI/UX 设计师。
-> **设计原则**：**本提示词不对任何视觉风格、色彩搭配或字体样式做干涉**。本提示词的核心任务是将全系统 35+ 个视图页面的**HTML/DOM 结构（Div 块级划分）、区域布局、包含的信息字段、使用的 UI 组件（表格/卡片/弹窗/表单）、指定的图标名称 (Icon Spec) 以及特定的图表类型 (Chart Spec)** 逐一精确绘制画出！
+> **设计原则**：**本提示词不对任何视觉风格、色彩搭配或字体样式做干涉**。本提示词将导航树中所有 35 个子视图页面**一个不漏地逐一画出**，精确标注每一个页面的 **HTML/Div 结构划分、区域布局、包含的信息字段、使用的 UI 组件、指定的图标名称 (Icon Spec) 以及特定的图表类型 (Chart Spec)**！
 
 ---
 
-## 目录
-1. [全局通用后台框架 (DefaultLayout)](#1-全局通用后台框架-defaultlayout)
-2. [登录与认证页面 (`/login`)](#2-登录与认证页面-login)
-3. [工作台与管理驾驶舱 (`/dashboard`, `/cmp/dashboard`)](#3-工作台与管理驾驶舱-dashboard-cmpdashboard)
-4. [综合分排行榜页面 (`/cmp/ranking`)](#4-综合分排行榜页面-cmpranking)
-5. [团员发展模块页面群 (`/ty/*`)](#5-团员发展模块页面群-ty)
-6. [社团活动模块页面群 (`/st/*`)](#6-社团活动模块页面群-st)
-7. [学生社区与自治模块页面群 (`/sq/*`)](#7-学生社区与自治模块页面群-sq)
-8. [勤工助学模块页面群 (`/qg/*`)](#8-勤工助学模块页面群-qg)
-9. [学生档案与系统管理页面群 (`/idx/*`, `/sys/*`)](#9-学生档案与系统管理页面群-idx-sys)
-10. [消息中心与通用组件 (`/notifications`, Modals)](#10-消息中心与通用组件-notifications-modals)
+## 目录与 35 个全量页面清单
+
+* [0. 全局通用框架结构 (`DefaultLayout`)](#0-全局通用框架结构-defaultlayout)
+* [1. 登录页面 (`/login`)](#1-登录页面-login)
+* [2. 工作台 (dashboard)](#2-工作台-dashboard)
+  * [2.1 管理驾驶舱 (`/cmp/dashboard`)](#21-管理驾驶舱-cmpdashboard)
+  * [2.2 综合分排行 (`/cmp/ranking`)](#22-综合分排行-cmpranking)
+* [3. 团员发展 (ty)](#3-团员发展-ty)
+  * [3.1 入团申请 (`/ty/application`)](#31-入团申请-tyapplication)
+  * [3.2 审批中心 (`/ty/approval`)](#32-审批中心-tyapproval)
+  * [3.3 支部推优大会 (`/ty/recommendation-meeting`)](#33-支部推优大会-tyrecommendation-meeting)
+  * [3.4 培养记录管理 (`/ty/cultivation`)](#34-培养记录管理-tycultivation)
+  * [3.5 发展对象管理 (`/ty/development-object`)](#35-发展对象管理-tydevelopment-object)
+  * [3.6 政治审查管理 (`/ty/political-review`)](#36-政治审查管理-typolitical-review)
+  * [3.7 接收发展大会 (`/ty/development-meeting`)](#37-接收发展大会-tydevelopment-meeting)
+  * [3.8 预备团员转正 (`/ty/probationary`)](#38-预备团员转正-typrobationary)
+  * [3.9 团员花名册 (`/ty/member-roster`)](#39-团员花名册-tymember-roster)
+* [4. 社团活动 (st)](#4-社团活动-st)
+  * [4.1 社团管理 (`/st/association`)](#41-社团管理-stassociation)
+  * [4.2 招新计划管理 (`/st/recruit-plan`)](#42-招新计划管理-strecruit-plan)
+  * [4.3 招新申请广场 (`/st/recruit-apply`)](#43-招新申请广场-strecruit-apply)
+  * [4.4 活动管理与审批 (`/st/activity`)](#44-活动管理与审批-stactivity)
+* [5. 学生社区 (sq)](#5-学生社区-sq)
+  * [5.1 楼栋与寝室网格 (`/sq/building`)](#51-楼栋与寝室网格-sqbuilding)
+  * [5.2 巡查记录大厅 (`/sq/inspection`)](#52-巡查记录大厅-sqinspection)
+  * [5.3 异常事件处置 (`/sq/incident`)](#53-异常事件处置-sqincident)
+* [6. 勤工助学 (qg)](#6-勤工助学-qg)
+  * [6.1 困难认定库 (`/qg/difficulty`)](#61-困难认定库-qgdifficulty)
+  * [6.2 岗位管理 (`/qg/position`)](#62-岗位管理-qgposition)
+  * [6.3 工时打卡与考勤 (`/qg/attendance`)](#63-工时打卡与考勤-qgattendance)
+* [7. 我的申请/个人中心 (mine)](#7-我的申请个人中心-mine)
+  * [7.1 我的团员发展 (`/mine/ty-development`)](#71-我的团员发展-minety-development)
+  * [7.2 我的入团申请 (`/mine/ty-application`)](#72-我的入团申请-minety-application)
+  * [7.3 我的思想汇报 (`/mine/thought-report`)](#73-我的思想汇报-minethought-report)
+  * [7.4 我的社团履历 (`/mine/activity`)](#74-我的社团履历-mineactivity)
+  * [7.5 我的勤工记录 (`/mine/work`)](#75-我的勤工记录-minework)
+  * [7.6 我的综合分 (`/mine/score`)](#76-我的综合分-minescore)
+  * [7.7 我的学籍档案 (`/mine/profile`)](#77-我的学籍档案-mineprofile)
+* [8. 学生管理 (idx)](#8-学生管理-idx)
+  * [8.1 学生列表与履历 (`/idx/student`)](#81-学生列表与履历-idxstudent)
+  * [8.2 学生批量导入 (`/idx/import`)](#82-学生批量导入-idximport)
+* [9. 系统管理 (sys)](#9-系统管理-sys)
+  * [9.1 字典管理 (`/sys/dict`)](#91-字典管理-sysdict)
+  * [9.2 用户账号管理 (`/sys/user`)](#92-用户账号管理-sysuser)
+  * [9.3 组织机构树 (`/sys/org`)](#93-组织机构树-sysorg)
+  * [9.4 定时任务监控 (`/sys/job`)](#94-定时任务监控-sysjob)
+* [10. 消息中心 (`/notifications`)](#10-消息中心-notifications)
 
 ---
 
-## 1. 全局通用后台框架 (DefaultLayout)
+## 0. 全局通用框架结构 (`DefaultLayout`)
 
-在系统登录后，所有业务页面均嵌套在 `DefaultLayout` 整体容器内，结构划分为三大固定 Div 区域：
+所有后台功能视图均嵌套在 `DefaultLayout` 整体容器内，结构划分为三大固定 Div 区域：
+
+* **Div 0.1 Header 顶部栏 (`div.header-top-bar`)**：
+  * `div.brand-logo`：图标 `School` / `GraduationCap` + 标题 `StudentHub 学生一站式自主管理系统`。
+  * `div.role-switcher`：图标 `SwitchUser` + 下拉选择 `ElSelect`（角色：`普通学生`、`团支部书记`、`社长`、`楼层长`、`辅导员`、`院系团委`、`校团委`、`管理员`）。
+  * `div.notification-bell`：图标 `Bell` + `ElBadge` 消息数 + 下拉通知卡片。
+  * `div.user-profile`：头像 `ElAvatar` + 用户名与学号 + 下拉菜单（`我的档案 User`、`修改密码 Key`、`退出登录 LogOut`）。
+* **Div 0.2 Left Sidebar 左侧导航 (`div.left-sidebar-menu`)**：
+  * 级联菜单 `ElMenu`，包含 8 大一级图标（`Odometer`, `Flag`, `Trophy`, `House`, `Briefcase`, `Document`, `User`, `Setting`）与子菜单。
+* **Div 0.3 Main Container 主内容区 (`div.main-container`)**：
+  * 顶部：面包屑 `ElBreadcrumb` + 页面标题 `div.page-header` + 右侧控制按钮组。
+  * 中间：筛选条件区 `div.filter-box` + 数据展示区 `div.data-box`。
+  * 底部：分页控制条 `ElPagination`。
+
+---
+
+## 1. 登录页面 (`/login`)
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ Div: Header Top Bar (顶部导航栏)                                                              │
-│ [Logo+Title Div]                     [Role Switcher Div] [Noti Bell Div] [Profile Dropdown Div]│
-├──────────────────────────────┬───────────────────────────────────────────────────────────────┤
-│ Div: Left Sidebar            │ Div: Main View Container (主内容区)                            │
-│ ├── 📊 工作台                │ ├── Div: Breadcrumb & Page Title Bar                         │
-│ ├── 🚩 团员发展              │ ├── Div: Filter & Search Action Bar                           │
-│ ├── 🎪 社团活动              │ ├── Div: Main Data Display (Table / Cards / Grid / Charts)    │
-│ ├── 🏢 学生社区              │ └── Div: Pagination Bar (底部分页控制条)                      │
-│ ├── 🛠️ 勤工助学              │                                                               │
-│ ├── 👤 我的申请              │                                                               │
-│ ├── 🎓 学生管理              │                                                               │
-│ └── ⚙️ 系统管理              │                                                               │
-└──────────────────────────────┴───────────────────────────────────────────────────────────────┘
-```
-
-### 1.1 顶部导航栏 `div.header-top-bar`
-* **Div 1.1.1 `div.brand-logo-container` (左侧品牌区)**：
-  * 图标：`School` / `GraduationCap` 图标。
-  * 文字：`StudentHub 学生一站式自主管理系统` 粗体标题。
-* **Div 1.1.2 `div.role-switcher-wrapper` (身份切换器区)**：
-  * 图标：`SwitchUser` / `UserCheck` 图标。
-  * 组件：`ElSelect` / `ElDropdown` 下拉选择框。
-  * 选项列表：`普通学生`、`团支部书记`、`社团社长`、`楼层长`、`院系辅导员`、`院系团委`、`校团委`、`系统管理员`。
-* **Div 1.1.3 `div.notification-bell-wrapper` (消息通知区)**：
-  * 图标：`Bell` 图标。
-  * 组件：`ElBadge` 红色未读数角标（如 `3`）。
-  * 弹出层：点击展开下拉通知卡片，包含消息列表（标题、时间、类型图标）与“标为已读”按钮。
-* **Div 1.1.4 `div.user-profile-dropdown` (个人账户区)**：
-  * 图标/头像：`ElAvatar` 圆形图像。
-  * 文本：展示当前登录用户真实姓名与学号/工号（如 `张三 (2023010101)`）。
-  * 下拉菜单项：`我的档案 (User)`、`修改密码 (Key)`、`退出登录 (LogOut)`。
-
-### 1.2 左侧导航菜单 `div.left-sidebar-menu`
-* **组件**：`ElMenu` 折叠式纵向菜单。
-* **一级与二级菜单项**：
-  1. `工作台 (Odometer)` ➔ 二级：管理驾驶舱、综合分排行。
-  2. `团员发展 (Flag)` ➔ 二级：入团申请、审批中心、推优大会、培养记录、发展对象、政审管理、发展大会、转正流程、团员花名册。
-  3. `社团活动 (Trophy)` ➔ 二级：社团管理、招新计划、招新申请、活动管理。
-  4. `学生社区 (House)` ➔ 二级：楼栋管理、巡查记录、异常事件。
-  5. `勤工助学 (Briefcase)` ➔ 二级：困难认定、岗位管理、工时打卡。
-  6. `我的申请 (Document)` ➔ 二级：我的团员发展、我的入团申请、我的思想汇报、我的社团、我的勤工、我的综合分、我的档案。
-  7. `学生管理 (User)` ➔ 二级：学生列表、学生导入。
-  8. `系统管理 (Setting)` ➔ 二级：字典管理、用户管理、组织管理、任务监控。
-
----
-
-## 2. 登录与认证页面 (`/login`)
-
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.login-page-wrapper (全屏登录背景)                                                          │
+│ div.login-page-wrapper                                                                       │
 │ ┌──────────────────────────────────────┬───────────────────────────────────────────────────┐ │
 │ │ div.login-left-banner                │ div.login-right-card                              │ │
-│ │ ├── 图标/插画: GraduationIllustration   │ ├── Div: Card Header (标题: 账号登录)              │ │
-│ │ ├── 大标题: StudentHub 智慧校园      │ ├── Div: Username Input (图标: User)               │ │
-│ │ └── 副标题: 过程留痕 · 规则卡控 · 综合量化│ ├── Div: Password Input (图标: Lock)               │ │
-│ │                                      │ ├── Div: Role Selector & Remember Checkbox        │ │
-│ │                                      │ ├── Div: Login Primary Button (图标: RightArrow)  │ │
-│ │                                      │ └── Div: Footer Version & Copyright               │ │
+│ │ ├── 图标插画: GraduationIllustration  │ ├── div.header (标题: 用户登录)                   │ │
+│ │ ├── 标题: StudentHub 智慧校园        │ ├── div.input-user (图标: User, 学号/工号)        │ │
+│ │ └── Slogan: 过程留痕·规则卡控·综合量化│ ├── div.input-pass (图标: Lock, 密码, 显隐切换)   │ │
+│ │                                      │ ├── div.options (记住密码 Checkbox + 忘记密码)    │ │
+│ │                                      │ ├── div.btn-submit (登录大按钮, 图标: ArrowRight) │ │
+│ │                                      │ └── div.footer (版本与版权信息)                   │ │
 │ └──────────────────────────────────────┴───────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-* **Div 2.1 `div.login-left-banner` (品牌展示区)**：
-  * 图像：校园与学生矢量插图。
-  * 文本：包含主标题 `StudentHub` 及 slogan `过程留痕 · 规则硬卡控 · 综合素质精准画像`。
-* **Div 2.2 `div.login-right-card` (登录卡片区)**：
-  * `div.card-header`：`用户登录` 标题。
-  * `div.input-username`：`ElInput`，前缀图标 `User`，占位文本 `请输入学号/工号/用户名`。
-  * `div.input-password`：`ElInput` (type=password)，前缀图标 `Lock`，后缀显示/隐藏眼睛图标 `View`。
-  * `div.options-bar`：`ElCheckbox` (记住密码)，右侧 `忘记密码` 链接。
-  * `div.submit-button`：`ElButton` (type=primary, long block)，文字 `登 录`，点击触发 Sa-Token 认证。
-  * `div.card-footer`：版本号 `v2.1.0 SpringBoot 版` 及版权声明。
+---
+
+## 2. 工作台 (dashboard)
+
+### 2.1 管理驾驶舱 (`/cmp/dashboard`)
+* **Div 2.1.1 `div.welcome-card`**：用户头像、问候语 `欢迎回来，张三老师！`、快捷按钮组（`新增申请 Plus`、`发起立项 Trophy`、`巡查打卡 House`）。
+* **Div 2.1.2 `div.kpi-cards-grid` (4 大 KPI 卡片)**：
+  1. `在读学生总数` (图标 `User`, 数值 `3,421`, 同比 `↑ 5.2%`)
+  2. `待我审批事项` (图标 `DocumentChecked`, 红色角标 `12`)
+  3. `活跃社团数` (图标 `Trophy`, 数值 `48`, 星级 `4.2 ★`)
+  4. `勤工在岗学生` (图标 `Briefcase`, 数值 `256`, 本月总工时 `8,420h`)
+* **Div 2.1.3 `div.spring-ai-eval-box` (Spring AI 大模型综测助手)**：
+  * 控件：学生选择器 `ElSelect` (搜姓名/学号)、学期选择器。
+  * 按钮：`ElButton` (type=success, icon=`Sparkles`/`Cpu`) `一键生成 AI 综测评语初稿`。
+  * 输出区：AI 评语文本域 `ElInput` (textarea)、改进建议 `ElTag` 列表、`人工覆写评语` 文本域及 `保存` 按钮 (图标 `Check`)。
+* **Div 2.1.4 `div.chart-row-1`**：
+  * 左：ECharts **综合素质 5 维雷达图 (Radar Chart)**（维度：团内、社团、社区、勤工、学业）。
+  * 右：ECharts **月度参与趋势双折线图 (Line Chart)**（X轴：9-6月，Y轴：人次；图例：活动签到数、勤工打卡数）。
+* **Div 2.1.5 `div.chart-row-2`**：
+  * 左：ECharts **社团分类占比饼图 (Pie Chart)**（思想政治、学术科技、文化体育、志愿公益）。
+  * 右：ECharts **楼栋隐患与晚归柱状图 (Bar Chart)**（X轴：1-10号楼，Y轴：件数；颜色区分 L1-L4）。
+
+### 2.2 综合分排行 (`/cmp/ranking`)
+* **Div 2.2.1 `div.filter-bar`**：学期下拉框、院系下拉框、专业下拉框、搜索框 (图标 `Search`)、`查询`、`重置`、`导出 Excel (Download)` 按钮。
+* **Div 2.2.2 `div.podium-cards`**：前三名金银铜卡片 (皇冠/奖牌图标 `Medal`)，展示头像、姓名、专业、总分大字。
+* **Div 2.2.3 `div.ranking-table`**：`ElTable` 包含排名 (前3高亮)、学生姓名/学号、院系专业、5 维细分得分、综合总分 (`ElProgress` 进度条)、`查看履历全景` 按钮。
 
 ---
 
-## 3. 工作台与管理驾驶舱 (`/dashboard`, `/cmp/dashboard`)
+## 3. 团员发展 (ty)
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.dashboard-container                                                                      │
-│ ├─ Div 3.1: Welcome Banner Card (欢迎卡片: 姓名, 角色标签, 快捷操作图标)                       │
-│ ├─ Div 3.2: Metric Cards Grid (4 个 KPI 统计卡片: 学生数, 待办数, 社团数, 在岗数)               │
-│ ├─ Div 3.3: Spring AI 智能综测生成助手卡片 (包含大模型评语生成, 图标: Sparkles, 覆写保存按钮)   │
-│ ├─ Div 3.4: Chart Row 1 (左: 综合素质 5 维雷达图 Radar; 右: 月度参与趋势双折线图 Line)          │
-│ ├─ Div 3.5: Chart Row 2 (左: 社团分类饼图 Pie; 右: 宿舍楼栋隐患分布柱状图 Bar)                 │
-│ └─ Div 3.6: Todo Task List & Audit Activity Timeline (待办列表与近期审计日志)                  │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+### 3.1 入团申请 (`/ty/application`)
+* **Div 3.1.1 `div.filter-bar`**：状态筛选 (S0-S4)、申请人搜索、`提交新申请 (Plus)` 按钮。
+* **Div 3.1.2 `div.application-table`**：列：申请单号、姓名、学号、团支部、申请日期、当前节点 Tag、状态 Tag (草稿/待审/通过/驳回)、操作（查看/编辑/撤回）。
+* **Div 3.1.3 `div.application-form-modal` (新增/编辑表单)**：
+  * 年龄校验 Card：年龄 14-28 岁 Green Tag / 超龄 Red Tag。
+  * 政治思想自述：`ElInput` (textarea, 强制 ≥500字，带有字数统计)。
+  * MinIO 附件：手写申请书照片上传组件 (图标 `Upload`，含 `眼睛 View` 预签名在线预览)。
 
-* **Div 3.1 `div.welcome-banner-card` (欢迎与快捷卡片)**：
-  * 元素：用户头像、问候语 `早上好，张三老师！当前身份：院系辅导员`、当前日期与天气。
-  * 快捷按钮组：`新增入团申请 (Plus)`、`发起活动立项 (Trophy)`、`巡查打卡 (House)`。
-* **Div 3.2 `div.kpi-metrics-grid` (4 大 KPI 统计卡片网格)**：
-  * 卡片 1 `div.kpi-card-1`：图标 `User` | 标题 `在读学生总数` | 数值 `3,421` | 同比 `↑ 5.2%`。
-  * 卡片 2 `div.kpi-card-2`：图标 `DocumentChecked` | 标题 `待我审批事项` | 数值 `12` (红色 Badge)。
-  * 卡片 3 `div.kpi-card-3`：图标 `Trophy` | 标题 `活跃社团数` | 数值 `48` | 星级均值 `4.2 ★`。
-  * 卡片 4 `div.kpi-card-4`：图标 `Briefcase` | 标题 `勤工在岗学生` | 数值 `256` | 本月总工时 `8,420h`。
-* **Div 3.3 `div.spring-ai-evaluation-card` (Spring AI 智能综测助手卡片)**：
-  * 标题区：图标 `Sparkles` / `MagicStick`，标题 `LLM 大模型 AI 综合素质测评助手`。
-  * 交互区：学生选择器 `ElSelect` (搜姓名/学号)、学期选择器 (如 `2025-2026-2`)。
-  * 按钮：`ElButton` (type=success, icon=`Cpu`)，文字 `一键生成 AI 综测评语初稿`。
-  * AI 输出区：
-    * 评价初稿：`ElInput` (type=textarea, rows=4)，内容展示 AI 结合 4 大模块履历生成的分析。
-    * 改进建议：`ElTag` 列表 (如 `建议加强社区宿舍卫生管理`, `社团活动参与度极高`)。
-    * 复核区：`人工覆写评语` 文本域 + `ElButton` (type=primary, icon=`Check`) `确认并保存评语`。
-* **Div 3.4 `div.chart-row-1` (第一排图表行)**：
-  * 左 Div `div.chart-radar`：ECharts **综合素质 5 维雷达图 (Radar Chart)**（维度：团内表现、社团活动、社区履职、勤工表现、学业成绩）。
-  * 右 Div `div.chart-line`：ECharts **月度活跃趋势双折线图 (Line Chart)**（X轴：9月-6月，Y轴：参与人次；图例：活动签到数、勤工打卡数）。
-* **Div 3.5 `div.chart-row-2` (第二排图表行)**：
-  * 左 Div `div.chart-pie`：ECharts **社团分类占比饼图 (Pie Chart)**（思想政治、学术科技、文化体育、志愿公益）。
-  * 右 Div `div.chart-bar`：ECharts **宿舍楼栋隐患与晚归柱状图 (Bar Chart)**（X轴：1号楼-10号楼，Y轴：件数；颜色区分 L1-L4 等级）。
-* **Div 3.6 `div.todo-list-container` (待办与日志区)**：
-  * 左侧：待办事项列表 `ElTable`（类型、申请人、提交时间、紧急度 Tag、操作`去审批`）。
-  * 右侧：系统审计日志时间轴 `ElTimeline`（显示最新 5 条状态变更记录与经办人）。
+### 3.2 审批中心 (`/ty/approval`)
+* **Div 3.2.1 `div.approval-tabs`**：`待我审批 (Badge 数量)` vs `我已审批` 选项卡。
+* **Div 3.2.2 `div.approval-cards-grid`**：待办申请卡片列表，展示学生头像、申请编号、自述摘要、当前阶段。
+* **Div 3.2.3 `div.approval-dialog` (审批弹窗)**：展现申请全景，选择 `同意 (Pass)` / `驳回 (Reject)`，驳回时强制输入意见（≥30字）。
 
----
+### 3.3 支部推优大会 (`/ty/recommendation-meeting`)
+* **Div 3.3.1 `div.meeting-config`**：支部选择、会议时间选择、会议地点。
+* **Div 3.3.2 `div.attendance-hard-control` (到会率硬卡控)**：
+  * 输入：应到团员数、实到团员数。
+  * 硬卡控 Tag：到会率 `83.3%`（`≥ 66.7%` 显示绿 Tag `满足推优条件`；`< 66.7%` 显示红 Alert `到会率不足，禁止提交`）。
+* **Div 3.3.3 `div.candidate-vote-table`**：候选人列表、赞成票 (ElInputNumber)、反对票、弃权票、过半通过 Tag (`赞成票 ≥ 实到 1/2`)。
+* **Div 3.3.4 `div.photo-wall`**：MinIO 会场照片上传墙（强制上传 2 张：会场全景 + 投票特写）。
 
-## 4. 综合分排行榜页面 (`/cmp/ranking`)
+### 3.4 培养记录管理 (`/ty/cultivation`)
+* **Div 3.4.1 `div.tutor-binding-card`**：绑定 2 名培养联系人信息（姓名、联系方式、党团身份）。
+* **Div 3.4.2 `div.cultivation-log-table`**：按月显示考察得分 (0-100)、评语、联系人签字。
+* **Div 3.4.3 `div.thought-report-box`**：思想汇报提交列表、季度选择、正文预览、AI 查重率 Badge（如 `12% 合规`，`>30% 自动打回`）。
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.score-ranking-container                                                                  │
-│ ├─ Div 4.1: Filter Bar (学期下拉, 院系下拉, 专业下拉, 搜索框, 查询/重置/导出按钮)               │
-│ ├─ Div 4.2: Top 3 Champion Podium Cards (前三名金银铜奖牌卡片)                                │
-│ ├─ Div 4.3: Leaderboard Data Table (全表展示: 排名, 学生信息, 5 维得分, 总分进度条, 履历按钮)   │
-│ └─ Div 4.4: Pagination Bar (底部分页控制条)                                                   │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+### 3.5 发展对象管理 (`/ty/development-object`)
+* **Div 3.5.1 `div.qualification-check`**：团课结业证书编号输入、结业成绩 (≥80分卡控)、志愿服务时长 (≥20h)。
+* **Div 3.5.2 `div.opinion-collection`**：培养联系人意见文本域、辅导员意见文本域、群众座谈记录 (≥10人参与)。
 
-* **Div 4.1 `div.filter-bar` (筛选控制条)**：
-  * 组件：`ElSelect` (学期)、`ElSelect` (院系)、`ElSelect` (专业)、`ElInput` (前缀图标 `Search` 姓名/学号)。
-  * 按钮组：`查询 (Search)`、`重置 (Refresh)`、`导出 Excel (Download)`。
-* **Div 4.2 `div.podium-cards-row` (前三名金银铜奖牌卡片)**：
-  * 3 个并排卡片：第一名 (金牌图标 `Medal` / 皇冠)、第二名 (银牌)、第三名 (铜牌)，展示头像、姓名、专业、总分大字。
-* **Div 4.3 `div.leaderboard-table-wrapper` (全表展示区)**：
-  * 组件：`ElTable`。
-  * 列定义：
-    1. `排名`：数字加 Badge（前 3 名高亮）。
-    2. `学生姓名 / 学号`：含小头像与班级。
-    3. `院系 / 专业`。
-    4. `团内表现分 (30%)`。
-    5. `社团活动分 (25%)`。
-    6. `社区履职分 (20%)`。
-    7. `勤工表现分 (15%)`。
-    8. `学业成绩分 (10%)`。
-    9. `综合总分`：带有 `ElProgress` 彩色进度条展示。
-    10. `操作`：`ElButton` (type=text, icon=`Document`) `查看履历全景`。
+### 3.6 政治审查管理 (`/ty/political-review`)
+* **Div 3.6.1 `div.review-scope-card`**：政审范围选择（本人、父母、配偶）。
+* **Div 3.6.2 `div.review-document-box`**：函调盖章公文 MinIO 上传组件、预签名 PDF 在线预览框。
+* **Div 3.6.3 `div.conclusion-selector`**：政审结论 Radio（合格 / 基本合格 / 不合格）。
+
+### 3.7 接收发展大会 (`/ty/development-meeting`)
+* **Div 3.7.1 `div.prerequisite-check`**：公示 5 个工作日检查 Tag、个人自传 (≥2000字) 上传标记。
+* **Div 3.7.2 `div.meeting-vote-box`**：发展大会表决票数录入、表决结果判定、《入团志愿书》生成。
+
+### 3.8 预备团员转正 (`/ty/probationary`)
+* **Div 3.8.1 `div.probationary-timer`**：预备期倒计时进度条 (满 1 年解锁转正按钮)。
+* **Div 3.8.2 `div.quarterly-inspection-table`**：4 个季度考察表提交状态。
+* **Div 3.8.3 `div.transfer-apply-box`**：转正申请书提交与校团委终审盖章按钮。
+
+### 3.9 团员花名册 (`/ty/member-roster`)
+* **Div 3.9.1 `div.roster-filter`**：全校团员搜索、团员证号检索、转出/离团筛选。
+* **Div 3.9.2 `div.roster-table`**：学号、姓名、所在支部、全国统一团员证号、入团时间、转正时间、团籍状态。
 
 ---
 
-## 5. 团员发展模块页面群 (`/ty/*`)
+## 4. 社团活动 (st)
 
-### 5.1 入团申请列表与表单页 (`/ty/application`, `/ty/application/new`)
+### 4.1 社团管理 (`/st/association`)
+* **Div 4.1.1 `div.assoc-card-grid`**：社团卡片网格，展示 Logo、名称、指导教师、会长、星级 `ElRate` (1-5星)、状态 Tag (筹备/试运行/注册/整顿/注销)。
+* **Div 4.1.2 `div.assoc-detail-drawer`**：社团章程预览、历任干部列表、申请换届按钮、申请注销按钮。
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.ty-application-form-wrapper                                                              │
-│ ├─ Div 5.1.1: Student Basic Info Header (学生姓名, 学号, 年龄卡控提示, 当前政治面貌)           │
-│ ├─ Div 5.1.2: Statement Textarea (政治思想自述多行文本域, 显示字数 >= 500 字卡控)              │
-│ ├─ Div 5.1.3: Rewards & Punishments (受奖励/处分历史记录)                                      │
-│ ├─ Div 5.1.4: MinIO Upload Box (手写申请书扫描件/PDF 上传区, 支持拖拽与预签名预览)              │
-│ └─ Div 5.1.5: Action Bar (提交申请按钮, 保存草稿按钮, 取消按钮)                                │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+### 4.2 招新计划管理 (`/st/recruit-plan`)
+* **Div 4.2.1 `div.plan-table`**：招新标题、目标人数、已录取 `ElProgress` 进度条、状态 Tag。
+* **Div 4.2.2 `div.finish-action-box`**：**`提前结束招新 (SwitchButton)`** 按钮。
+* **Div 4.2.3 `div.finish-modal` (提前结束招新二次确认弹窗)**：
+  * 图标：`Warning` 警告。
+  * 提示：`提前结束招新操作不可逆！结束之后学生将无法在招新广场投递本计划。`
+  * 输入：`结束原因` (textarea, 必填)、`确认结束` 按钮。
 
-* **Div 5.1.1 `div.student-info-header`**：展示学生头像、姓名、学号、年龄校验卡片（年龄 14-28 岁打勾绿 Tag，超龄红 Tag 警告）。
-* **Div 5.1.2 `div.statement-box`**：`ElInput` (type=textarea, rows=6)，右下角字数统计 `542 / 500 字 (合规)`。
-* **Div 5.1.3 `div.rewards-box`**：`ElTable` 展示学生在校期间获奖与处分记录。
-* **Div 5.1.4 `div.minio-upload-box`**：MinIO 附件上传组件 `UploadFile.vue`（图标 `Upload`，支持 PDF/图片拖拽，带有 `眼睛 (View)` 预签名在线预览与 `垃圾桶 (Delete)` 删除按钮）。
-* **Div 5.1.5 `div.action-bar`**：`提交申请 (Check)` (主按钮)、`保存草稿 (FolderChecked)`、`取消`。
+### 4.3 招新申请广场 (`/st/recruit-apply`)
+* **Div 4.3.1 `div.recruit-square-grid`**：招新海报卡片流（社团简介、需求岗位、面试时间/地点、“立即投递简历”按钮）。
+* **Div 4.3.2 `div.apply-modal`**：学生简历预览、个人优势说明、提交投递。
 
-### 5.2 支部推优大会页 (`/ty/recommendation-meeting`)
-
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.recommendation-meeting-wrapper                                                           │
-│ ├─ Div 5.2.1: Meeting Config Card (支部选择, 会议时间, 会议地点)                             │
-│ ├─ Div 5.2.2: Hard Control Attendance Box (应到人数, 实到人数, 到会率刚性校验 Tag >= 2/3)     │
-│ ├─ Div 5.2.3: Candidate Vote Table (候选人列表: 姓名, 赞成票, 反对票, 弃权票, 是否通过 Tag)   │
-│ ├─ Div 5.2.4: Meeting Photos Upload Wall (会场全景照片 + 投票特写照片 MinIO 上传墙)           │
-│ └─ Div 5.2.5: Action Bar (生成推优决议 PDF 按钮, 提交保存按钮)                                │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-* **Div 5.2.2 `div.attendance-box`**：
-  * 输入框：`应到团员数` (例 `30`)、`实到团员数` (例 `25`)。
-  * 刚性卡控 Alert：到会率 `83.3%`（`≥ 66.7%` 绿 Tag 显示 `满足推优开会条件`；若低于 2/3 显示红 Alert `到会率不足，无法提交`）。
-* **Div 5.2.3 `div.candidate-table`**：
-  * 列：`候选人姓名`、`申请单号`、`赞成票 (ElInputNumber)`、`反对票`、`弃权票`、`表决结果 (Tag: 通过 / 未通过)`。系统实时校验“赞成票 ≥ 实到 1/2”。
-* **Div 5.2.4 `div.photo-wall`**：MinIO 多张照片上传墙（必须包含 2 张照片：会场全景 + 投票特写）。
-
-### 5.3 团员成长轨迹时间轴页 (`/ty/students/:id/development-track`)
-
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.development-track-container                                                              │
-│ ├─ Div 5.3.1: Student Track Profile Banner (学生档案卡: 当前节点徽章: 预备团员)               │
-│ └─ Div 5.3.2: 7-Step Vertical Timeline (7 步垂直时间轴组件)                                  │
-│    ├── Step 1: 入团申请 (完成 2025-09-10, 经办人: 辅导员, 查看申请表 PDF)                       │
-│    ├── Step 2: 支部推优 (完成 2025-10-15, 到会率 85%, 查看推优决议)                           │
-│    ├── Step 3: 培养考察 (进行中, 已考察 4 个月, 思想汇报 2 篇, 查重率 12%)                      │
-│    ├── Step 4: 发展对象 (待开启)                                                             │
-│    ├── Step 5: 政治审查 (待开启)                                                             │
-│    ├── Step 6: 接收发展大会 (待开启)                                                         │
-│    └── Step 7: 预备团员转正 (待开启)                                                         │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-* **组件**：`DevelopmentTrack.vue` (基于 `ElTimeline` 封装)。
-* **节点元素**：图标（完成 `CircleCheckFilled` / 进行中 `Loading` / 未开始 `CircleClose`）、阶段名称、完成时间、经办人姓名、查看附件按钮。
+### 4.4 活动管理与审批 (`/st/activity`)
+* **Div 4.4.1 `div.activity-form` (立项表单)**：
+  * 活动名称、预算金额 (元)、预计人数、活动范围 (院系内/跨院系/跨校)。
+  * **动态级别计算 Box**：自动匹配并渲染 **A 级 (红 Badge)** / **B 级 (橙 Badge)** / **C 级 (蓝 Badge)** / **D 级 (绿 Badge)**。
+  * **MinIO 上传区**：A/B 级动态提示上传 `* 应急预案 PDF` 与 `* 安全承诺书 PDF`。
+* **Div 4.4.2 `div.activity-approval-flow`**：流水线审批链预览（指导教师 ➔ 院系 ➔ 校社联 ➔ 校团委 ➔ 校领导）。
+* **Div 4.4.3 `div.activity-checkin-box`**：签到二维码动态刷新框、GPS 定位地图、实时已签到列表（迟到 >15min 标记）。
+* **Div 4.4.4 `div.activity-summary-box`**：活动总结文本、照片上传墙 (≥3张)、发票报销表。
 
 ---
 
-## 6. 社团活动模块页面群 (`/st/*`)
+## 5. 学生社区 (sq)
 
-### 6.1 社团招新计划管理与“提前结束招新”弹窗 (`/st/recruit-plan`)
+### 5.1 楼栋与寝室网格 (`/sq/building`)
+* **Div 5.1.1 `div.building-left-menu`**：楼栋列表（1号楼-10号楼、男舍/女舍、楼管会指导教师）。
+* **Div 5.1.2 `div.floor-tabs`**：楼层选择单选框 (1楼-6楼)。
+* **Div 5.1.3 `div.room-grid`**：寝室卡片网格。
+  * 元素：寝室号 (如 `302`)、床位进度条 (`4/4`)、寝室长姓名头像；连续 3 次卫生不达标卡片右上角显示红闪 Tag `重点关注寝室`。点击卡片弹出人员与床位调整 Modal。
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.st-recruit-plan-container                                                                │
-│ ├─ Div 6.1.1: Action Bar (新建招新计划按钮, 筛选框)                                          │
-│ ├─ Div 6.1.2: Plan Table (标题, 所属社团, 目标人数, 已录用进度条, 状态 Tag, 操作列)            │
-│ └─ Div 6.1.3: [Modal Dialog] Finish Recruit Modal (提前结束招新确认弹窗: 原因输入, 不可逆警告)│
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+### 5.2 巡查记录大厅 (`/sq/inspection`)
+* **Div 5.2.1 `div.type-tabs`**：巡查类型切换（卫生巡查 / 晚归检查 / 违规电器 / 安全隐患 / 消防通道）。
+* **Div 5.2.2 `div.inspection-form`**：寝室选择、卫生评分 Slider (0-100)、扣分项 Checkbox、违规电器拍照取证上传 (MinIO)、晚归人员登记。
 
-* **Div 6.1.2 `div.plan-table`**：
-  * 列：`招新标题`、`社团名称`、`目标人数`、`已录取` (带有 `ElProgress` 进度条)、`计划状态 (Tag: 待审/招新中)`、`结束标记 (Tag: 招新中 / 已提前结束)`。
-  * 操作列：`ElButton` (type=danger, icon=`SwitchButton`) `提前结束招新`（仅在 `status=S3` 且 `is_finished=0` 时可用）。
-* **Div 6.1.3 `div.finish-modal` (提前结束招新弹窗)**：
-  * 图标：`Warning` 黄色警告图标。
-  * 警告提示：`提前结束招新操作不可逆！结束之后学生将无法在招新广场投递本计划。`
-  * 输入项：`结束原因` (`ElInput` type=textarea, 必填)。
-  * 按钮：`确认结束 (Check)`、`取消`。
-
-### 6.2 活动立项 A/B/C/D 动态分级审批页 (`/st/activity/new`, `/st/activity/approval`)
-
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.st-activity-form-container                                                               │
-│ ├─ Div 6.2.1: Form Header (活动名称, 所属社团)                                                │
-│ ├─ Div 6.2.2: Dynamic Level Auto-Calculator Box (预算金额, 预估人数, 活动范围 ➔ 自动判定级别) │
-│ │  └── [A级/B级/C级/D级] 彩色大徽章 (例如: B 级活动 - 须校团委审批)                           │
-│ ├─ Div 6.2.3: Mandatory MinIO Uploads (应急预案 PDF 上传区, 安全承诺书上传区)                │
-│ ├─ Div 6.2.4: Approval Flow Preview (审批链预览: 指导教师➔院系➔校社联➔校团委)                 │
-│ └─ Div 6.2.5: Action Bar (提交立项按钮)                                                      │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-* **Div 6.2.2 `div.level-calculator-box`**：
-  * 输入项：`预算金额` (`ElInputNumber` 单位：元)、`预计人数`、`活动范围` (下拉：院系内/跨院系/跨校)。
-  * 实时等级 Badge：输入后自动变化：
-    * `A 级 (红色 Badge)`：跨校/预算>1万/涉外。
-    * `B 级 (橙色 Badge)`：跨院系/500人以上/预算5000-10000。
-    * `C 级 (蓝色 Badge)`：院系内/100人以上/预算1000-5000。
-    * `D 级 (绿色 Badge)`：100人以下/预算<1000。
-* **Div 6.2.3 `div.mandatory-uploads`**：当判定为 A/B 级时，动态显示标红 `* 应急预案上传` 与 `* 安全承诺书上传` 区域（基于 MinIO 上传）。
+### 5.3 异常事件处置 (`/sq/incident`)
+* **Div 5.3.1 `div.kanban-board` (L1-L4 看板)**：
+  * L1 (常规报修) / L2 (违规/矛盾) / L3 (严重隐患) / **L4 (火警/突发事件)** 4 列。
+  * **L4 列特效**：带红框呼吸闪烁与 10min 倒计时，卡片提供指导教师 `一键确认结案` 按钮。
 
 ---
 
-## 7. 学生社区与自治模块页面群 (`/sq/*`)
+## 6. 勤工助学 (qg)
 
-### 7.1 楼栋与宿舍网格树页 (`/sq/building`)
+### 6.1 困难认定库 (`/qg/difficulty`)
+* **Div 6.1.1 `div.year-select`**：学年选择器、认定等级 Tag (特别困难-紫 / 困难-红 / 一般困难-黄 / 不困难-灰)。
+* **Div 6.1.2 `div.cert-table`**：困难学生列表、证明材料 MinIO 预览按钮、班级评议得分。
+* **门禁提示 Modal**：非困难生投递岗位时弹出红字 Alert `须先通过家庭经济困难认定方可申请勤工岗位！`。
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.sq-building-container                                                                    │
-│ ┌──────────────────────────────┬───────────────────────────────────────────────────────────┐ │
-│ │ div.left-building-list       │ div.right-room-grid-panel                                 │ │
-│ │ ├── 1 号楼 (男舍)            │ ├── Div: Floor Selector Tabs (1楼, 2楼, 3楼, 4楼)           │ │
-│ │ ├── 2 号楼 (女舍)            │ ├── Div: Room Cards Grid (寝室卡片网格)                    │ │
-│ │ └── 3 号楼 (混合)            │ │   ├── Card 301: 床位 4/4 (满), 卫生: 95, 干部: 李四(寝室长) │ │
-│ │                              │ │   ├── Card 302: 床位 3/4 (空1), 卫生: 70 [重点关注 Tag]   │ │
-│ │                              │ │   └── Card 303: 床位 4/4 (满), 卫生: 88                   │ │
-│ └──────────────────────────────┴───────────────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+### 6.2 岗位管理 (`/qg/position`)
+* **Div 6.2.1 `div.position-grid`**：岗位卡片（岗位名称、用人部门、时薪、每周工时上限 `≤20h` 卡控 Tag、需求/已录用人数）。
+* **Div 6.2.2 `div.apply-btn`**：`申请上岗` 按钮（自动校验同时在岗数 ≤1）。
 
-* **左侧 `div.left-building-list`**：楼栋选择列表 `ElMenu`，显示楼栋名称、管辖辅导员。
-* **右侧 `div.right-room-grid-panel`**：
-  * `div.floor-tabs`：楼层切换 `ElRadioGroup` / `ElTabs`。
-  * `div.room-grid`：寝室卡片网格。
-  * **寝室卡片元素**：寝室号大字（如 `302`）、床位使用进度条、寝室长姓名头像；连续 3 次卫生不达标卡片右上角显示红闪 Tag `重点关注寝室`。点击卡片弹出人员与床位调整 Modal。
-
-### 7.2 异常事件处置中心页 (`/sq/incident`)
-
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.sq-incident-kanban-wrapper                                                               │
-│ ┌──────────────────┬──────────────────┬──────────────────┬─────────────────────────────────┐ │
-│ │ L1-常规报修      │ L2-一般违规      │ L3-严重隐患      │ L4-火警/突发事件 (红闪警报框)    │ │
-│ ├──────────────────┼──────────────────┼──────────────────┼─────────────────────────────────┤ │
-│ │ 301 锁坏了       │ 204 晚归 (23:15) │ 402 打架斗殴     │ 502 烟雾报警器响 (10min倒计时) │ │
-│ │ [指派物业]       │ [楼层长处置]     │ [联动辅导员]     │ [强提醒 + 短信 + 教师一键结案]   │ │
-│ └──────────────────┴──────────────────┴──────────────────┴─────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-* **结构**：4 列看板 (Kanban Column) 布局（L1, L2, L3, L4）。
-* **L4 列特效**：带有红色边框呼吸闪烁效果，倒计时 `响应剩余: 08:30`，点击卡片弹出强提醒弹窗，提供指导教师 `一键确认结案` 按钮。
+### 6.3 工时打卡与考勤 (`/qg/attendance`)
+* **Div 6.3.1 `div.clock-box`**：中央数字时钟 `14:30:25`、GPS 定位 Tag、`上班打卡 (Pointer)` / `下班打卡` 巨型按钮。
+* **Div 6.3.2 `div.monthly-limit-box` (月 40h 硬卡控)**：
+  * 进度条 `38.5 / 40h`。
+  * **当满 `40.0h` 时，进度条变红，打卡大按钮强制置灰禁用 (`disabled`)，下方显示警告 `根据规定，单月工时上限为 40 小时，已达封顶，不可继续打卡！`**。
+* **Div 6.3.3 `div.makeup-modal`**：双签补卡申请弹窗（辅导员 + 用人部门双签状态）。
 
 ---
 
-## 8. 勤工助学模块页面群 (`/qg/*`)
+## 7. 我的申请/个人中心 (mine)
 
-### 8.1 困难认定库与前置门禁 (`/qg/difficulty`)
-* **界面**：包含学年选择器、认定等级 Tag（特别困难-紫、困难-红、一般困难-黄、不困难-灰）、证明材料 MinIO 在线预览按钮。
-* **门禁提醒**：若普通学生未通过困难认定，在访问勤工岗位投递时，弹窗提示红字警报 `须先通过家庭经济困难认定方可申请勤工助学岗位！`。
+### 7.1 我的团员发展 (`/mine/ty-development`)
+* 展示学生本人入团发展 7 步轨迹时间轴、当前节点进度、下阶段任务提示。
 
-### 8.2 工时打卡与月 40h 硬卡控阻断页 (`/qg/attendance`)
+### 7.2 我的入团申请 (`/mine/ty-application`)
+* 查看/修改本人入团申请书、查看审批进度与各级审批意见。
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│ div.qg-attendance-container                                                                  │
-│ ├─ Div 8.2.1: Clock-In/Out Giant Buttons Box (当前系统时间巨型时钟, GPS 地图定位, 打卡大按钮)  │
-│ ├─ Div 8.2.2: Monthly 40h Hard Limit Progress Bar (当月累计工时进度条: 38.5 / 40h)           │
-│ │  └── [当满 40h 时]: 进度条变红, 打卡按钮硬性置灰禁用, 提示 "当月工时已达 40h 封顶上限！"    │
-│ ├─ Div 8.2.3: Attendance Logs Calendar & Table (本月打卡日历视图与明细表格)                   │
-│ └─ Div 8.2.4: Makeup Clock Request Modal (双签补卡申请弹窗: 辅导员+用人部门双签状态)          │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+### 7.3 我的思想汇报 (`/mine/thought-report`)
+* 提交本季度思想汇报正文，实时查看 AI 查重率结果与联系人评语。
 
-* **Div 8.2.1 `div.clock-buttons-box`**：
-  * 中央：巨型数字时钟 `14:30:25`，GPS 定位 Tag `已定位: 电子信息楼 302`。
-  * 按钮：`上班打卡 (Pointer)` (绿色巨型圆按钮) / `下班打卡 (Check)`。
-* **Div 8.2.2 `div.monthly-limit-box` (月 40h 硬卡控)**：
-  * 组件：`ElProgress` (percentage)。
-  * 逻辑：工时为 `38.5h / 40h` 时正常显示；**一旦达到 `40.0h / 40h`，进度条变成红色，打卡大按钮强制置灰禁用 (`disabled`)，下方显示硬卡控警告 `根据规定，勤工助学单月工时上限为 40 小时，已达封顶，不可继续打卡！`**。
+### 7.4 我的社团履历 (`/mine/activity`)
+* 展示已加入社团列表、担任职务、参与的活动签到历史与获奖记录。
+
+### 7.5 我的勤工记录 (`/mine/work`)
+* 查看当前勤工岗位、当月累计工时进度条、打卡历史与历月薪酬明细。
+
+### 7.6 我的综合分 (`/mine/score`)
+* 个人综合素质 5 维雷达图、全校/院系排名、各维度得分明细、**查看 Spring AI 生成的个人综测评语**。
+
+### 7.7 我的学籍档案 (`/mine/profile`)
+* 展示个人基础学籍信息、政治面貌、脱敏身份证/手机号、紧急联系人与宿舍床位。
 
 ---
 
-## 9. 学生档案与系统管理页面群 (`/idx/*`, `/sys/*`)
+## 8. 学生管理 (idx)
 
-### 9.1 学生列表与敏感数据脱敏页 (`/idx/student`)
-* **表格字段**：学号、姓名、性别、脱敏身份证（`110101********0012`）、脱敏手机号（`138****5678`）、政治面貌 Tag、困难等级 Tag。
-* **脱敏解密交互**：双击脱敏字段或点击 `查看明细 (View)`，提示 Sa-Token 敏感权限校验并记录 `audit_log` 后弹窗显示明细。
+### 8.1 学生列表与履历 (`/idx/student`)
+* **筛选栏**：院系/专业/班级下拉框、姓名学号搜索框。
+* **表格**：学号、姓名、脱敏身份证 (`110101********0012`)、脱敏手机号 (`138****5678`)、政治面貌 Tag、困难等级 Tag；操作栏包含 `查看全景履历` 弹窗按钮（触发敏数据解密审计）。
 
-### 9.2 学生批量导入页 (`/idx/import`)
-* **组件**：拖拽上传框 `ElUpload` (drag)，上传 Excel 模板；上传后渲染 `解析预览表格`，显示标红异常行（如学号重复），提供 `下载导入异常报告 (Download)` 按钮。
+### 8.2 学生批量导入 (`/idx/import`)
+* **拖拽上传区**：MinIO/Excel 文件拖拽框 `ElUpload`。
+* **解析预览表**：导入数据实时校验列表（重复学号标红高亮），提供 `下载导入异常报告` 按钮。
 
 ---
 
-## 10. 消息中心与通用组件 (`/notifications`, Modals)
+## 9. 系统管理 (sys)
 
-### 10.1 消息中心页面 (`/notifications`)
-* **结构**：左侧消息分类 Tab (审批提醒、告警通知、考勤通知、系统消息) + 右侧消息卡片列表。
-* **卡片元素**：消息图标、消息标题、发送时间、摘要内容、`一键跳转关联单据` 按钮。
+### 9.1 字典管理 (`/sys/dict`)
+* 左侧：字典分类树（性别、政治面貌、活动级别、困难等级、巡查类型等）。
+* 右侧：字典项 Key-Value 配置表格、排序、启用/禁用开关。
 
-### 10.2 通用审批弹窗组件 (`ApprovalDialog.vue`)
-* **组件结构**：`ElDialog`。
-* **元素**：
-  * 申请人全景概要信息。
-  * 审批选择 `ElRadioGroup`：`同意 (Pass)` / `驳回 (Reject)`。
-  * 审批意见 `ElInput` (textarea, 驳回时强制 ≥ 30 字)。
-  * 底部按钮 `确认提交 (Check)`、`取消`。
+### 9.2 用户账号管理 (`/sys/user`)
+* 用户账号表格、重置密码弹窗、绑定学生/教师 ID、Sa-Token 角色分配穿梭框 (`ElTransfer`)。
 
-### 10.3 MinIO 预签名在线预览弹窗组件 (`FilePreviewModal.vue`)
-* **组件结构**：`ElDialog` (fullscreen / large)。
-* **元素**：
-  * 头部：原始文件名、文件大小、`下载原文件 (Download)` 按钮。
-  * 内容区：若是图片直接渲染 `img`；若是 PDF 调用 `pdf.js` / `iframe` 渲染在线预览；不支持格式提供占位提示。
+### 9.3 组织机构树 (`/sys/org`)
+* 树形面板编辑院系 (`sys_college`)、专业 (`sys_major`)、班级 (`idx_class`) 及分配辅导员。
+
+### 9.4 定时任务监控 (`/sys/job`)
+* Cron 任务列表（工时自动核算、评优计算、日志归档）、执行状态 Tag、`立即执行一次` 按钮、运行日志抽屉 (`ElDrawer`)。
+
+---
+
+## 10. 消息中心 (`/notifications`)
+
+### 10.1 消息中心主页 (`/notifications`)
+* **分类 Tab**：`全部` / `审批提醒` / `告警通知` / `考勤通知` / `系统消息`。
+* **消息列表**：图标（审批 `DocumentChecked` / 告警 `Warning` / 考勤 `Clock`）、标题、发送时间、摘要内容、`一键已读` 按钮、`一键跳转关联单据` 按钮。
