@@ -1,16 +1,16 @@
 <template>
   <div class="sh-login-wrapper">
-    <!-- Animated Ambient Glowing Orbs -->
+    <!-- Ambient Glowing Orbs -->
     <div class="sh-orb orb-1"></div>
     <div class="sh-orb orb-2"></div>
     <div class="sh-orb orb-3"></div>
 
     <div class="sh-login-card sh-glass-card sh-animate-slide-up">
-      <!-- Left Panel: Branding & Slogan -->
+      <!-- Left Panel: Branding & Role Presets -->
       <div class="sh-login-brand">
         <div class="brand-badge">
           <span class="badge-dot"></span>
-          <span>StudentHub v2.1 SpringBoot</span>
+          <span>StudentHub v2.1 Google Stitch Clean Theme</span>
         </div>
         <h1 class="brand-title">学生“一站式”自主管理过程管理系统</h1>
         <p class="brand-desc">
@@ -20,7 +20,7 @@
         <div class="brand-features">
           <div class="feature-item">
             <el-icon class="feature-icon"><Check /></el-icon>
-            <span>多角色 RBAC / ABAC 权限动态切控</span>
+            <span>多角色 RBAC / ABAC 动态切控（含辅导员/管理员/学生）</span>
           </div>
           <div class="feature-item">
             <el-icon class="feature-icon"><Check /></el-icon>
@@ -33,10 +33,13 @@
         </div>
 
         <div class="quick-preset-box">
-          <span class="preset-title">快速测试账户：</span>
+          <span class="preset-title">快捷测试身份预设：</span>
           <div class="preset-btns">
             <el-tag class="preset-tag" effect="dark" type="primary" @click="fillAccount('admin', 'admin@123')">
               系统管理员 (admin)
+            </el-tag>
+            <el-tag class="preset-tag" effect="dark" type="warning" @click="fillAccount('counselor', 'counselor@123')">
+              院系辅导员 (counselor)
             </el-tag>
             <el-tag class="preset-tag" effect="dark" type="success" @click="fillAccount('2023010101', 'student@123')">
               普通学生 (2023010101)
@@ -49,7 +52,7 @@
       <div class="sh-login-form-area">
         <div class="form-header">
           <h2>账号身份验证</h2>
-          <p>请使用学号 / 工号 / 管理员账号登录</p>
+          <p>请使用学号 / 辅导员工号 / 管理员账号登录</p>
         </div>
 
         <el-form
@@ -63,7 +66,7 @@
           <el-form-item prop="username">
             <el-input
               v-model="form.username"
-              placeholder="学号 / 工号 / 用户名"
+              placeholder="学号 / 辅导员工号 / 用户名"
               :prefix-icon="User"
               clearable
             />

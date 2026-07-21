@@ -29,6 +29,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         seedRoles();
         seedAdminUser();
+        seedCounselorUser();
     }
 
     private void seedRoles() {
@@ -75,6 +76,23 @@ public class DataInitializer implements CommandLineRunner {
             admin.setIsDeleted(0);
             sysUserMapper.insert(admin);
             log.info("Seeded admin user (admin / admin@123)");
+        }
+    }
+
+    private void seedCounselorUser() {
+        Long count = sysUserMapper.selectCount(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, "counselor"));
+        if (count == 0) {
+            SysUser counselor = new SysUser();
+            counselor.setUsername("counselor");
+            counselor.setPasswordHash("counselor@123");
+            counselor.setDisplayName("张辅导员");
+            counselor.setUserType("counselor");
+            counselor.setStatus("active");
+            counselor.setCreatedAt(LocalDateTime.now());
+            counselor.setUpdatedAt(LocalDateTime.now());
+            counselor.setIsDeleted(0);
+            sysUserMapper.insert(counselor);
+            log.info("Seeded counselor user (counselor / counselor@123)");
         }
     }
 }
