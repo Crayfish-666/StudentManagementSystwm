@@ -11,7 +11,7 @@ import java.util.*;
 @RequestMapping("/sys")
 public class MenuController {
 
-    @GetMapping("/menu")
+    @GetMapping({"/menu", "/menus/mine"})
     public R<Map<String, Object>> getMyMenus() {
         List<Map<String, Object>> menus = new ArrayList<>();
 
