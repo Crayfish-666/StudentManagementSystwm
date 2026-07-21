@@ -21,7 +21,7 @@
 | **ADR 架构决策文档** | [ADR.md](file:///d:/Developing/WorkSpace/StudentManagementSystemVD/ADR.md) | 包含分层架构图、ADR-001 ~ ADR-009 架构决策（SpringBoot3/SQLite WAL/Sa-Token/Flyway/MinIO/Spring AI） |
 | **数据库设计规范** | [database_design_spec.md](file:///d:/Developing/WorkSpace/StudentManagementSystemVD/database_design_spec.md) | 包含 Mermaid ER 图、SQLite 全量 DDL 脚本、唯一索引、CHECK 约束与 Flyway 初始化迁移脚本 |
 | **API 规范文档 (SRD)** | [SRD_api_specifications.md](file:///d:/Developing/WorkSpace/StudentManagementSystemVD/SRD_api_specifications.md) | RESTful API 契约、Sa-Token 鉴权、统一 Response 封包、错误码表、MinIO & AI 端点与 JSON 样例 |
-| **Figma UI 设计提示词** | [figma_prompt.md](file:///d:/Developing/WorkSpace/StudentManagementSystemVD/figma_prompt.md) | **Figma UI/UX 原型设计提示词**（包含全页面清单、布局结构、元素及跳转关系，无样式干涉） |
+| **Figma 超详细 UI/UX 提示词** | [figma_prompt.md](file:///d:/Developing/WorkSpace/StudentManagementSystemVD/figma_prompt.md) | **Figma 超详细原型提示词**（精确划分每个页面的 Div 结构、数据字段、UI 组件、指定 Icon 与 ECharts 图表类型） |
 | **业务分析报告** | [Analyze.md](file:///d:/Developing/WorkSpace/StudentManagementSystemVD/Analyze.md) | 10 大维度纯业务分析报告（项目定位、角色、流程、数据模型、页面数据流等） |
 
 ---
