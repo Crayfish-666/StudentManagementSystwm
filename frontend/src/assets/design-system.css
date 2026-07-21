@@ -1,50 +1,49 @@
-/* StudentHub Modern Design System v2.1 */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+/* Google Stitch Nexus Campus Design System Token Definition */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Brand Primary Colors */
-  --sh-primary: #6366f1;
-  --sh-primary-hover: #4f46e5;
-  --sh-primary-light: #e0e7ff;
-  --sh-secondary: #8b5cf6;
-  --sh-accent-cyan: #06b6d4;
-  --sh-accent-emerald: #10b981;
-  --sh-accent-amber: #f59e0b;
-  --sh-accent-rose: #f43f5e;
+  /* Google Stitch Primary Navy Palette */
+  --sh-primary: #00236f;
+  --sh-primary-hover: #1e3a8a;
+  --sh-primary-light: #dce1ff;
+  --sh-primary-container: #1e3a8a;
+  --sh-on-primary-container: #90a8ff;
 
-  /* Dark Theme Surfaces */
-  --sh-bg-main: #090d16;
-  --sh-bg-surface: #111827;
-  --sh-bg-glass: rgba(17, 24, 39, 0.75);
-  --sh-bg-header: rgba(15, 23, 42, 0.85);
+  /* Google Stitch Secondary Slate Palette */
+  --sh-secondary: #515f74;
+  --sh-secondary-container: #d5e3fc;
+  --sh-on-secondary-container: #3a485b;
 
-  /* Gradients */
-  --sh-gradient-brand: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-  --sh-gradient-dark: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-  --sh-gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-  --sh-gradient-gold: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --sh-gradient-cyber: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  /* Google Stitch Emerald Accent Palette */
+  --sh-tertiary: #00311f;
+  --sh-tertiary-container: #004a31;
+  --sh-on-tertiary-container: #27c38a;
+  --sh-tertiary-fixed: #6ffbbe;
 
-  /* Text & Border */
-  --sh-text-primary: #f8fafc;
-  --sh-text-secondary: #94a3b8;
-  --sh-text-muted: #64748b;
-  --sh-border-color: rgba(255, 255, 255, 0.08);
-  --sh-border-glow: rgba(99, 102, 241, 0.4);
+  /* Surface & Background Canvas (Google Slate Clean Light) */
+  --sh-bg-main: #f7f9fb;
+  --sh-bg-surface: #ffffff;
+  --sh-surface-low: #f2f4f6;
+  --sh-surface-high: #e6e8ea;
+  --sh-surface-variant: #e0e3e5;
 
-  /* Shadows */
-  --sh-shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  --sh-shadow-glow: 0 0 25px rgba(99, 102, 241, 0.35);
-  --sh-shadow-hover: 0 20px 40px -15px rgba(99, 102, 241, 0.45);
+  /* Text & Outline */
+  --sh-text-primary: #191c1e;
+  --sh-text-secondary: #444651;
+  --sh-text-muted: #757682;
+  --sh-outline: #c5c5d3;
+  --sh-outline-variant: #e0e3e5;
 
-  /* Radii */
+  /* Google Material Shadows & Radii */
+  --sh-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.08);
+  --sh-card-shadow-hover: 0 4px 16px rgba(0, 35, 111, 0.12);
   --sh-radius-sm: 8px;
-  --sh-radius-md: 14px;
-  --sh-radius-lg: 20px;
-  --sh-radius-xl: 28px;
+  --sh-radius-md: 12px;
+  --sh-radius-lg: 16px;
+  --sh-radius-pill: 9999px;
 }
 
-/* Global Reset & Base Styles */
+/* Base Reset */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -52,112 +51,105 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--sh-bg-main);
   color: var(--sh-text-primary);
   line-height: 1.5;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Glassmorphism Card Container */
-.sh-glass-card {
-  background: var(--sh-bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--sh-border-color);
-  border-radius: var(--sh-radius-md);
-  box-shadow: var(--sh-shadow-card);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Google Stitch Clean Material Card */
+.sh-stitch-card {
+  background: var(--sh-bg-surface);
+  border: 1px solid var(--sh-surface-variant);
+  border-radius: var(--sh-radius-lg);
+  box-shadow: var(--sh-card-shadow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sh-glass-card:hover {
-  border-color: var(--sh-border-glow);
-  box-shadow: var(--sh-shadow-hover);
-  transform: translateY(-2px);
+.sh-stitch-card:hover {
+  border-color: #b6c4ff;
+  box-shadow: var(--sh-card-shadow-hover);
 }
 
-/* Gradient Button */
-.sh-btn-gradient {
-  background: var(--sh-gradient-brand);
+/* Google Stitch Navy Button */
+.sh-btn-stitch {
+  background: var(--sh-primary);
   color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
   font-weight: 600;
   border: none;
   border-radius: var(--sh-radius-sm);
   padding: 10px 20px;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-  transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
 
-.sh-btn-gradient:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
-  filter: brightness(1.1);
+.sh-btn-stitch:hover {
+  background: var(--sh-primary-hover);
+  transform: translateY(-1px);
 }
 
-/* Pulsing Badge Indicator */
-.sh-badge-pulse {
-  position: relative;
+.sh-btn-stitch-secondary {
+  background: var(--sh-secondary-container);
+  color: var(--sh-primary);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--sh-radius-sm);
+  padding: 10px 20px;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
+  gap: 8px;
+  transition: background 0.2s ease;
 }
 
-.sh-badge-pulse::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  background: inherit;
-  animation: shPulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-  z-index: 0;
+.sh-btn-stitch-secondary:hover {
+  background: #b9c7df;
 }
 
-@keyframes shPulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  70%, 100% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
+/* Google Chip / Pill Badge */
+.sh-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--sh-radius-pill);
+  font-size: 12px;
+  font-weight: 600;
 }
 
-@keyframes shSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.sh-chip-navy {
+  background: var(--sh-primary-light);
+  color: var(--sh-primary);
 }
 
-.sh-animate-slide-up {
-  animation: shSlideUp 0.5s ease-out forwards;
+.sh-chip-emerald {
+  background: #d1fae5;
+  color: #065f46;
 }
 
-/* Custom Scrollbars */
+.sh-chip-amber {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: var(--sh-bg-main);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: #c5c5d3;
   border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--sh-primary);
 }

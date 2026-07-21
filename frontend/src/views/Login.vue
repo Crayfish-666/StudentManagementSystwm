@@ -1,58 +1,59 @@
 <template>
-  <div class="sh-login-wrapper">
-    <!-- Ambient Glowing Orbs -->
-    <div class="sh-orb orb-1"></div>
-    <div class="sh-orb orb-2"></div>
-    <div class="sh-orb orb-3"></div>
-
-    <div class="sh-login-card sh-glass-card sh-animate-slide-up">
-      <!-- Left Panel: Branding & Role Presets -->
-      <div class="sh-login-brand">
-        <div class="brand-badge">
+  <div class="stitch-login-canvas">
+    <div class="login-card sh-stitch-card">
+      <!-- Left Panel: Nexus Campus Branding -->
+      <div class="brand-panel">
+        <div class="campus-badge">
           <span class="badge-dot"></span>
-          <span>StudentHub v2.1 Google Stitch Clean Theme</span>
-        </div>
-        <h1 class="brand-title">学生“一站式”自主管理过程管理系统</h1>
-        <p class="brand-desc">
-          基于全周期过程档案与时间戳记录，覆盖团员发展、社团活动、社区自治与勤工助学四大模块。
-        </p>
-
-        <div class="brand-features">
-          <div class="feature-item">
-            <el-icon class="feature-icon"><Check /></el-icon>
-            <span>多角色 RBAC / ABAC 动态切控（含辅导员/管理员/学生）</span>
-          </div>
-          <div class="feature-item">
-            <el-icon class="feature-icon"><Check /></el-icon>
-            <span>MinIO 对象存储分片上传与时效预览</span>
-          </div>
-          <div class="feature-item">
-            <el-icon class="feature-icon"><Check /></el-icon>
-            <span>Spring AI / DeepSeek 大模型综测自动考评</span>
-          </div>
+          <span>Nexus Campus - StudentHub v2.1</span>
         </div>
 
-        <div class="quick-preset-box">
-          <span class="preset-title">快捷测试身份预设：</span>
-          <div class="preset-btns">
-            <el-tag class="preset-tag" effect="dark" type="primary" @click="fillAccount('admin', 'admin@123')">
+        <div class="brand-hero">
+          <h1 class="hero-title">学生一站式自主管理过程管理系统</h1>
+          <p class="hero-sub">
+            围绕“学生主体 + 过程档案”，覆盖团员发展、社团活动、学生社区、勤工助学与综合素质考评。
+          </p>
+        </div>
+
+        <div class="feature-bullets">
+          <div class="bullet-item">
+            <div class="bullet-icon"><el-icon><Select /></el-icon></div>
+            <div>
+              <div class="bullet-title">三角色动态切控</div>
+              <div class="bullet-desc">支持系统管理员、院系辅导员、普通学生权限隔离</div>
+            </div>
+          </div>
+
+          <div class="bullet-item">
+            <div class="bullet-icon"><el-icon><Select /></el-icon></div>
+            <div>
+              <div class="bullet-title">Spring AI / DeepSeek 综测</div>
+              <div class="bullet-desc">整合五维量化评分与大模型智能综合评价</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="preset-account-area">
+          <span class="preset-label">快捷身份预设（一键填充）：</span>
+          <div class="preset-chips">
+            <div class="sh-chip sh-chip-navy cursor-pointer" @click="fillAccount('admin', 'admin@123')">
               系统管理员 (admin)
-            </el-tag>
-            <el-tag class="preset-tag" effect="dark" type="warning" @click="fillAccount('counselor', 'counselor@123')">
+            </div>
+            <div class="sh-chip sh-chip-amber cursor-pointer" @click="fillAccount('counselor', 'counselor@123')">
               院系辅导员 (counselor)
-            </el-tag>
-            <el-tag class="preset-tag" effect="dark" type="success" @click="fillAccount('2023010101', 'student@123')">
+            </div>
+            <div class="sh-chip sh-chip-emerald cursor-pointer" @click="fillAccount('2023010101', 'student@123')">
               普通学生 (2023010101)
-            </el-tag>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Right Panel: Interactive Form -->
-      <div class="sh-login-form-area">
-        <div class="form-header">
+      <!-- Right Panel: Stitch Form -->
+      <div class="form-panel">
+        <div class="form-title-group">
           <h2>账号身份验证</h2>
-          <p>请使用学号 / 辅导员工号 / 管理员账号登录</p>
+          <p>请选择学号 / 辅导员工号 / 管理员账号登录</p>
         </div>
 
         <el-form
@@ -60,7 +61,7 @@
           :model="form"
           :rules="rules"
           size="large"
-          class="sh-login-form"
+          class="stitch-form"
           @keyup.enter="handleLogin"
         >
           <el-form-item prop="username">
@@ -82,25 +83,25 @@
             />
           </el-form-item>
 
-          <div class="form-options">
-            <el-checkbox v-model="rememberMe" label="记住当前设备" />
+          <div class="form-row-options">
+            <el-checkbox v-model="rememberMe" label="记住登录设备" />
             <el-link type="primary" :underline="false">忘记密码？</el-link>
           </div>
 
           <button
             type="button"
-            class="sh-btn-gradient login-submit-btn"
+            class="sh-btn-stitch submit-btn"
             :disabled="loading"
             @click="handleLogin"
           >
             <el-icon v-if="loading" class="is-loading"><Loading /></el-icon>
             <el-icon v-else><Right /></el-icon>
-            <span>{{ loading ? '正在进行全身份验证...' : '立 即 登 录' }}</span>
+            <span>{{ loading ? '正在验证身份...' : '安全登录' }}</span>
           </button>
         </el-form>
 
-        <div class="form-footer">
-          <span>StudentHub Management Center &copy; 2026</span>
+        <div class="stitch-form-footer">
+          <span>Nexus Campus Management System &copy; 2026</span>
         </div>
       </div>
     </div>
@@ -110,7 +111,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Lock, Check, Right, Loading } from '@element-plus/icons-vue'
+import { User, Lock, Select, Right, Loading } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMenuStore } from '@/stores/menu'
 import { ElMessage } from 'element-plus'
@@ -129,7 +130,7 @@ const form = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入学号/工号/用户名', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
@@ -158,195 +159,172 @@ async function handleLogin() {
 </script>
 
 <style scoped>
-.sh-login-wrapper {
+.stitch-login-canvas {
   min-height: 100vh;
+  background: var(--sh-bg-main);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--sh-bg-main);
-  position: relative;
-  overflow: hidden;
-  padding: 20px;
+  padding: 24px;
 }
 
-/* Glowing Ambient Orbs */
-.sh-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.45;
-  pointer-events: none;
-}
-.orb-1 {
-  width: 450px;
-  height: 450px;
-  background: #6366f1;
-  top: -100px;
-  left: -100px;
-}
-.orb-2 {
-  width: 550px;
-  height: 550px;
-  background: #8b5cf6;
-  bottom: -150px;
-  right: -150px;
-}
-.orb-3 {
-  width: 350px;
-  height: 350px;
-  background: #06b6d4;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.sh-login-card {
+.login-card {
   width: 100%;
-  max-width: 980px;
+  max-width: 960px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.1fr 0.9fr;
   overflow: hidden;
-  z-index: 10;
 }
 
-/* Left Panel */
-.sh-login-brand {
-  padding: 48px;
-  background: linear-gradient(135deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
-  border-right: 1px solid var(--sh-border-color);
+/* Left Brand Panel */
+.brand-panel {
+  padding: 40px;
+  background: linear-gradient(135deg, #00164e 0%, #00236f 100%);
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.brand-badge {
+.campus-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   font-size: 12px;
-  color: var(--sh-primary);
+  font-weight: 500;
   width: fit-content;
 }
 .badge-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--sh-primary);
-  box-shadow: 0 0 8px var(--sh-primary);
+  background: #6ffbbe;
 }
 
-.brand-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 26px;
+.hero-title {
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.4;
   margin-top: 24px;
-  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
-
-.brand-desc {
-  font-size: 14px;
-  color: var(--sh-text-secondary);
-  margin-top: 16px;
+.hero-sub {
+  font-size: 13px;
+  color: #b6c4ff;
+  margin-top: 12px;
   line-height: 1.6;
 }
 
-.brand-features {
+.feature-bullets {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-top: 32px;
+  gap: 16px;
+  margin-top: 24px;
 }
-.feature-item {
+.bullet-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.bullet-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(111, 251, 190, 0.2);
+  color: #6ffbbe;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: var(--sh-text-primary);
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
 }
-.feature-icon {
-  color: var(--sh-accent-emerald);
+.bullet-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.bullet-desc {
+  font-size: 12px;
+  color: #dce1ff;
+  margin-top: 2px;
 }
 
-.quick-preset-box {
-  margin-top: 36px;
+.preset-account-area {
+  margin-top: 28px;
   padding-top: 20px;
-  border-top: 1px dashed var(--sh-border-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
-.preset-title {
+.preset-label {
   font-size: 12px;
-  color: var(--sh-text-muted);
+  color: #b6c4ff;
   display: block;
   margin-bottom: 10px;
 }
-.preset-btns {
+.preset-chips {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
-.preset-tag {
+.cursor-pointer {
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.15s;
 }
-.preset-tag:hover {
-  transform: scale(1.05);
+.cursor-pointer:hover {
+  transform: scale(1.04);
 }
 
-/* Right Panel */
-.sh-login-form-area {
-  padding: 48px;
+/* Right Form Panel */
+.form-panel {
+  padding: 40px;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.form-header h2 {
-  font-size: 24px;
+.form-title-group h2 {
+  font-size: 22px;
   font-weight: 700;
-  color: var(--sh-text-primary);
+  color: var(--sh-primary);
 }
-.form-header p {
+.form-title-group p {
   font-size: 13px;
   color: var(--sh-text-secondary);
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
-.sh-login-form {
-  margin-top: 32px;
+.stitch-form {
+  margin-top: 28px;
 }
 
-.form-options {
+.form-row-options {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-.login-submit-btn {
+.submit-btn {
   width: 100%;
-  height: 48px;
-  font-size: 16px;
+  height: 46px;
   justify-content: center;
+  font-size: 15px;
 }
 
-.form-footer {
+.stitch-form-footer {
   text-align: center;
   font-size: 12px;
   color: var(--sh-text-muted);
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 @media (max-width: 768px) {
-  .sh-login-card {
+  .login-card {
     grid-template-columns: 1fr;
   }
-  .sh-login-brand {
+  .brand-panel {
     display: none;
   }
 }
