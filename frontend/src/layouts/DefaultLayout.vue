@@ -1,42 +1,61 @@
 <template>
-  <el-container class="layout-container">
-    <!-- 顶部通栏 Header -->
-    <el-header class="layout-header" :height="headerHeight">
-      <div class="header-left">
-        <!-- Logo -->
-        <div class="header-logo" @click="$router.push('/dashboard')">
-          <img src="/images/logo.png" alt="Logo" class="logo-img" />
-          <span class="logo-text">学生一站式管理平台</span>
+  <el-container class="sh-layout-container">
+    <!-- Top Glassmorphism Header -->
+    <el-header class="sh-layout-header" height="68px">
+      <!-- Left: Logo & App Title -->
+      <div class="header-left" @click="$router.push('/dashboard')">
+        <div class="logo-icon-wrap">
+          <el-icon :size="24"><School /></el-icon>
+        </div>
+        <div class="brand-titles">
+          <span class="main-title">StudentHub</span>
+          <span class="sub-title">学生一站式自主管理系统</span>
         </div>
       </div>
-      <div class="header-center" />
+
+      <!-- Right: Actions & User Info -->
       <div class="header-right">
-        <!-- 首页按钮 -->
-        <div class="header-nav-item" :class="{ active: isHome }" @click="$router.push('/dashboard')">
-          <el-icon :size="16"><HomeFilled /></el-icon>
-          <span>首页</span>
+        <!-- Role Switcher Dropdown -->
+        <div class="role-switcher-box">
+          <el-icon><Switch /></el-icon>
+          <el-select v-model="currentRole" placeholder="切换角色视角" size="default" style="width: 140px;">
+            <el-option label="系统管理员" value="R-SY-ADMIN" />
+            <el-option label="院系辅导员" value="R-COL-COUN" />
+            <el-option label="院系团委书记" value="R-COL-LEAGUE" />
+            <el-option label="社团社长/干部" value="R-STU-ASSOC" />
+            <el-option label="普通学生" value="R-STU-NORM" />
+          </el-select>
         </div>
-        <!-- 通知铃铛 -->
-        <NotificationBell class="header-bell" />
-        <div class="header-divider" />
-        <el-dropdown trigger="click" @command="handleCommand">
-          <span class="user-info">
-            <el-avatar :size="32" icon="UserFilled" class="user-avatar" />
-            <span class="user-name">{{ authStore.displayName || '用户' }}</span>
-            <el-icon class="user-arrow"><ArrowDown /></el-icon>
-          </span>
+
+        <!-- Notification Bell -->
+        <div class="noti-bell-wrap" @click="$router.push('/notifications')">
+          <el-badge :value="3" class="noti-badge">
+            <el-icon :size="20"><Bell /></el-icon>
+          </el-badge>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- User Profile Dropdown -->
+        <el-dropdown trigger="click" @command="handleUserCommand">
+          <div class="user-profile-trigger">
+            <el-avatar :size="36" icon="UserFilled" class="user-avatar" />
+            <span class="user-name">{{ displayName }}</span>
+            <el-icon><ArrowDown /></el-icon>
+          </div>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item disabled>
-                <div class="role-tags">
-                  <el-tag size="small" v-for="role in authStore.roles" :key="role" effect="plain">
-                    {{ role }}
-                  </el-tag>
-                </div>
+              <el-dropdown-item command="profile">
+                <el-icon><User /></el-icon>
+                <span>我的档案</span>
+              </el-dropdown-item>
+              <el-dropdown-item command="password">
+                <el-icon><Key /></el-icon>
+                <span>修改密码</span>
               </el-dropdown-item>
               <el-dropdown-item divided command="logout">
                 <el-icon><SwitchButton /></el-icon>
-                退出登录
+                <span>退出登录</span>
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -44,51 +63,125 @@
       </div>
     </el-header>
 
-    <!-- 下方区域：侧边栏 + 主内容 -->
-    <el-container class="layout-body">
-      <!-- 侧边栏 -->
-      <el-aside :width="isCollapse ? '64px' : '220px'" class="layout-aside">
+    <!-- Main Layout Body -->
+    <el-container class="sh-layout-body">
+      <!-- Left Sidebar Menu -->
+      <el-aside :width="isCollapse ? '68px' : '230px'" class="sh-layout-aside">
         <div class="sidebar-toggle" @click="isCollapse = !isCollapse">
           <el-icon :size="16">
             <component :is="isCollapse ? 'Expand' : 'Fold'" />
           </el-icon>
         </div>
+
         <el-menu
           :default-active="activeMenu"
           :collapse="isCollapse"
           :collapse-transition="false"
           router
-          background-color="transparent"
-          text-color="var(--sh-text-secondary)"
-          active-text-color="var(--sh-primary)"
-          @select="(index) => console.log('[Menu] select ->', index, '| current route =', $route.path)"
+          class="sh-sidebar-menu"
         >
-          <template v-for="menu in menuStore.menuList" :key="menu.code">
-            <!-- 有子菜单 -->
-            <el-sub-menu v-if="menu.children && menu.children.length" :index="menu.path">
-              <template #title>
-                <el-icon><component :is="menu.icon" /></el-icon>
-                <span>{{ menu.title }}</span>
-              </template>
-              <el-menu-item
-                v-for="child in menu.children"
-                :key="child.code"
-                :index="child.path"
-              >
-                {{ child.title }}
-              </el-menu-item>
-            </el-sub-menu>
-            <!-- 无子菜单 -->
-            <el-menu-item v-else :index="menu.path">
-              <el-icon><component :is="menu.icon" /></el-icon>
-              <template #title>{{ menu.title }}</template>
-            </el-menu-item>
-          </template>
+          <!-- 1. 工作台 -->
+          <el-sub-menu index="/dashboard">
+            <template #title>
+              <el-icon><Odometer /></el-icon>
+              <span>工作台</span>
+            </template>
+            <el-menu-item index="/dashboard">管理驾驶舱</el-menu-item>
+            <el-menu-item index="/cmp/ranking">综合分排行</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 2. 团员发展 -->
+          <el-sub-menu index="/ty">
+            <template #title>
+              <el-icon><Flag /></el-icon>
+              <span>团员发展</span>
+            </template>
+            <el-menu-item index="/ty/application">入团申请</el-menu-item>
+            <el-menu-item index="/ty/approval">审批中心</el-menu-item>
+            <el-menu-item index="/ty/recommendation-meeting">推优大会</el-menu-item>
+            <el-menu-item index="/ty/cultivation">培养记录</el-menu-item>
+            <el-menu-item index="/ty/development-object">发展对象</el-menu-item>
+            <el-menu-item index="/ty/political-review">政审管理</el-menu-item>
+            <el-menu-item index="/ty/development-meeting">发展大会</el-menu-item>
+            <el-menu-item index="/ty/probationary">转正流程</el-menu-item>
+            <el-menu-item index="/ty/member-roster">团员花名册</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 3. 社团活动 -->
+          <el-sub-menu index="/st">
+            <template #title>
+              <el-icon><Trophy /></el-icon>
+              <span>社团活动</span>
+            </template>
+            <el-menu-item index="/st/association">社团管理</el-menu-item>
+            <el-menu-item index="/st/recruit-plan">招新计划</el-menu-item>
+            <el-menu-item index="/st/recruit-apply">招新广场</el-menu-item>
+            <el-menu-item index="/st/activity">活动管理</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 4. 学生社区 -->
+          <el-sub-menu index="/sq">
+            <template #title>
+              <el-icon><House /></el-icon>
+              <span>学生社区</span>
+            </template>
+            <el-menu-item index="/sq/building">楼栋网格</el-menu-item>
+            <el-menu-item index="/sq/inspection">巡查记录</el-menu-item>
+            <el-menu-item index="/sq/incident">异常处置</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 5. 勤工助学 -->
+          <el-sub-menu index="/qg">
+            <template #title>
+              <el-icon><Briefcase /></el-icon>
+              <span>勤工助学</span>
+            </template>
+            <el-menu-item index="/qg/difficulty">困难认定</el-menu-item>
+            <el-menu-item index="/qg/position">岗位管理</el-menu-item>
+            <el-menu-item index="/qg/attendance">工时打卡</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 6. 我的申请 -->
+          <el-sub-menu index="/mine">
+            <template #title>
+              <el-icon><Document /></el-icon>
+              <span>我的申请</span>
+            </template>
+            <el-menu-item index="/mine/ty-development">我的团员发展</el-menu-item>
+            <el-menu-item index="/mine/ty-application">我的入团申请</el-menu-item>
+            <el-menu-item index="/mine/thought-report">我的思想汇报</el-menu-item>
+            <el-menu-item index="/mine/activity">我的社团</el-menu-item>
+            <el-menu-item index="/mine/work">我的勤工</el-menu-item>
+            <el-menu-item index="/mine/score">我的综合分</el-menu-item>
+            <el-menu-item index="/mine/profile">我的档案</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 7. 学生管理 -->
+          <el-sub-menu index="/idx">
+            <template #title>
+              <el-icon><User /></el-icon>
+              <span>学生管理</span>
+            </template>
+            <el-menu-item index="/idx/student">学生列表</el-menu-item>
+            <el-menu-item index="/idx/import">学生导入</el-menu-item>
+          </el-sub-menu>
+
+          <!-- 8. 系统管理 -->
+          <el-sub-menu index="/sys">
+            <template #title>
+              <el-icon><Setting /></el-icon>
+              <span>系统管理</span>
+            </template>
+            <el-menu-item index="/sys/dict">字典管理</el-menu-item>
+            <el-menu-item index="/sys/user">用户管理</el-menu-item>
+            <el-menu-item index="/sys/org">组织管理</el-menu-item>
+            <el-menu-item index="/sys/job">任务监控</el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </el-aside>
 
-      <!-- 主区域 -->
-      <el-main class="layout-main">
+      <!-- Right Content Container -->
+      <el-main class="sh-layout-main">
         <router-view />
       </el-main>
     </el-container>
@@ -98,242 +191,179 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import {
+  School, Switch, Bell, ArrowDown, User, Key, SwitchButton,
+  Expand, Fold, Odometer, Flag, Trophy, House, Briefcase, Document, Setting
+} from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
-import { useMenuStore } from '@/stores/menu'
-import { HomeFilled, ArrowDown, SwitchButton, Expand, Fold } from '@element-plus/icons-vue'
-import NotificationBell from '@/layouts/components/NotificationBell.vue'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const menuStore = useMenuStore()
 
 const isCollapse = ref(false)
-const headerHeight = '64px'
+const currentRole = ref('R-SY-ADMIN')
 const activeMenu = computed(() => route.path)
-const isHome = computed(() => route.path === '/dashboard')
+const displayName = computed(() => authStore.displayName || '管理员')
 
-async function handleCommand(cmd) {
+async function handleUserCommand(cmd) {
   if (cmd === 'logout') {
     await authStore.logout()
+    ElMessage.info('已安全退出登录')
     router.push('/login')
+  } else if (cmd === 'profile') {
+    router.push('/mine/profile')
+  } else if (cmd === 'password') {
+    ElMessage.info('功能提示：请在个人中心修改密码')
   }
 }
 </script>
 
 <style scoped>
-.layout-container {
-  height: 100vh;
-  flex-direction: column;
-  background: var(--sh-bg-base);
+.sh-layout-container {
+  min-height: 100vh;
+  background: var(--sh-bg-main);
 }
 
-/* ── 顶部通栏 Header ── */
-.layout-header {
+/* Header */
+.sh-layout-header {
+  background: var(--sh-bg-header);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--sh-border-color);
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: var(--sh-bg-white);
-  border-bottom: 1px solid var(--sh-border-light);
-  padding: 0 var(--sh-space-lg);
-  z-index: 10;
-  box-shadow: var(--sh-shadow-sm);
+  align-items: center;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-/* Header 内 Logo */
-.header-logo {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  gap: 10px;
-  padding: 4px 8px;
-  margin-left: -16px;
-  border-radius: var(--sh-radius-md);
-  transition: background var(--sh-duration-fast) var(--sh-ease-out);
-}
-.header-logo:hover {
-  background: var(--sh-primary-lighter);
-}
-.header-logo .logo-img {
-  height: 36px;
-  flex-shrink: 0;
-}
-.header-logo .logo-text {
-  color: var(--sh-primary-dark);
-  font-size: var(--sh-text-lg);
-  font-weight: 700;
-  white-space: nowrap;
-  letter-spacing: 0.02em;
-}
-
-/* 中间导航 */
-.header-center {
-  display: flex;
-  align-items: center;
-  gap: var(--sh-space-xs);
-}
-.header-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: var(--sh-radius-md);
-  color: var(--sh-text-secondary);
-  font-size: var(--sh-text-sm);
-  font-weight: 500;
-  transition: all var(--sh-duration-fast) var(--sh-ease-out);
-}
-.header-nav-item:hover {
-  color: var(--sh-primary);
-  background: var(--sh-primary-lighter);
-}
-.header-nav-item.active {
-  color: var(--sh-primary);
-  background: var(--sh-primary-lighter);
-  font-weight: 600;
-}
-
-/* 右侧区域 */
 .header-left {
   display: flex;
   align-items: center;
-}
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: var(--sh-space-sm);
-}
-.header-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--sh-border-light);
-  margin: 0 var(--sh-space-xs);
-}
-.header-bell {
-  margin-right: 4px;
-}
-.user-info {
-  display: flex;
-  align-items: center;
+  gap: 12px;
   cursor: pointer;
-  gap: 8px;
-  padding: 4px 8px;
-  border-radius: var(--sh-radius-md);
-  transition: background var(--sh-duration-fast) var(--sh-ease-out);
 }
-.user-info:hover {
-  background: var(--sh-bg-elevated);
-}
-.user-avatar {
-  background: var(--sh-primary);
-}
-.user-name {
-  font-size: var(--sh-text-sm);
-  color: var(--sh-text-regular);
-  font-weight: 500;
-}
-.user-arrow {
-  font-size: 12px;
-  color: var(--sh-text-placeholder);
-  transition: transform var(--sh-duration-fast) var(--sh-ease-out);
-}
-.role-tags {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-/* ── 下方 body 区域 ── */
-.layout-body {
-  flex: 1;
-  overflow: hidden;
-}
-
-/* ── 侧边栏 ── */
-.layout-aside {
-  background: var(--sh-bg-white);
-  border-right: 1px solid var(--sh-border-light);
-  transition: width 0.3s var(--sh-ease-out);
-  overflow-y: auto;
-  overflow-x: hidden;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-}
-.sidebar-toggle {
+.logo-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--sh-gradient-brand);
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
+  color: #ffffff;
+  box-shadow: var(--sh-shadow-glow);
+}
+.brand-titles {
+  display: flex;
+  flex-direction: column;
+}
+.main-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.sub-title {
+  font-size: 11px;
+  color: var(--sh-text-secondary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.role-switcher-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sh-text-secondary);
+}
+.noti-bell-wrap {
   cursor: pointer;
-  color: var(--sh-text-placeholder);
-  border-bottom: 1px solid var(--sh-border-light);
-  transition: all var(--sh-duration-fast) var(--sh-ease-out);
-  flex-shrink: 0;
+  padding: 8px;
+  color: var(--sh-text-secondary);
+  transition: color 0.2s;
+}
+.noti-bell-wrap:hover {
+  color: var(--sh-primary);
+}
+.divider {
+  width: 1px;
+  height: 24px;
+  background: var(--sh-border-color);
+}
+.user-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.user-avatar {
+  background: var(--sh-gradient-brand);
+}
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sh-text-primary);
+}
+
+/* Sidebar */
+.sh-layout-body {
+  height: calc(100vh - 68px);
+}
+.sh-layout-aside {
+  background: rgba(15, 23, 42, 0.6);
+  border-right: 1px solid var(--sh-border-color);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-toggle {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sh-text-muted);
+  cursor: pointer;
+  border-bottom: 1px solid var(--sh-border-color);
+  transition: color 0.2s;
 }
 .sidebar-toggle:hover {
   color: var(--sh-primary);
-  background: var(--sh-primary-lighter);
 }
 
-/* ── 主区域 ── */
-.layout-main {
-  background: var(--sh-bg-base);
+.sh-sidebar-menu {
+  border: none;
+  background: transparent;
+  flex: 1;
   overflow-y: auto;
-  padding: 0;
 }
 
-/* ── Element Plus 菜单样式覆盖 ── */
-:deep(.el-menu) {
-  border-right: none;
-  width: 100%;
-  padding: var(--sh-space-xs);
-}
-:deep(.el-menu-item) {
-  border-radius: var(--sh-radius-md);
-  margin: 2px 0;
-  height: 44px;
-  line-height: 44px;
+:deep(.el-sub-menu__title), :deep(.el-menu-item) {
+  color: var(--sh-text-secondary) !important;
   font-weight: 500;
-  transition: all var(--sh-duration-fast) var(--sh-ease-out);
 }
-:deep(.el-menu-item:hover) {
-  background: var(--sh-primary-lighter) !important;
-  color: var(--sh-primary) !important;
+:deep(.el-sub-menu__title:hover), :deep(.el-menu-item:hover) {
+  color: #ffffff !important;
+  background: rgba(99, 102, 241, 0.12) !important;
 }
 :deep(.el-menu-item.is-active) {
-  background: var(--sh-primary-lighter) !important;
-  color: var(--sh-primary) !important;
-  font-weight: 600;
-  position: relative;
+  color: #ffffff !important;
+  background: var(--sh-gradient-brand) !important;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+  border-radius: 8px;
+  margin: 4px 8px;
 }
-:deep(.el-menu-item.is-active::before) {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  background: var(--sh-primary);
-  border-radius: 0 2px 2px 0;
-}
-:deep(.el-sub-menu__title) {
-  border-radius: var(--sh-radius-md);
-  margin: 2px 0;
-  height: 44px;
-  line-height: 44px;
-  font-weight: 500;
-  transition: all var(--sh-duration-fast) var(--sh-ease-out);
-}
-:deep(.el-sub-menu__title:hover) {
-  background: var(--sh-primary-lighter) !important;
-  color: var(--sh-primary) !important;
-}
-:deep(.el-sub-menu .el-menu-item) {
-  padding-left: 52px !important;
-  height: 40px;
-  line-height: 40px;
-  font-size: var(--sh-text-sm);
+
+/* Main */
+.sh-layout-main {
+  padding: 24px;
+  overflow-y: auto;
 }
 </style>

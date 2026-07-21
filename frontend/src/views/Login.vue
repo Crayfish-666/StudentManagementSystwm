@@ -1,53 +1,71 @@
 <template>
-  <div class="login-page">
-    <!-- 左侧：品牌展示区（轮播背景） -->
-    <div class="login-brand">
-      <div class="brand-slider">
-        <img class="slide-img slide-1" src="/images/img01.jpg" alt="校园风光" />
-        <img class="slide-img slide-2" src="/images/img02.jpg" alt="校园风光" />
-      </div>
-      <div class="brand-overlay">
-        <div class="brand-header">
-          <img
-            class="brand-logo"
-            src="/images/logo.png"
-            alt="福州软件职业技术学院"
-          />
-          <div class="brand-text">
-            <span class="brand-divider">|</span>
-            <span class="brand-subtitle">学生一站式自主管理平台</span>
+  <div class="sh-login-wrapper">
+    <!-- Animated Ambient Glowing Orbs -->
+    <div class="sh-orb orb-1"></div>
+    <div class="sh-orb orb-2"></div>
+    <div class="sh-orb orb-3"></div>
+
+    <div class="sh-login-card sh-glass-card sh-animate-slide-up">
+      <!-- Left Panel: Branding & Slogan -->
+      <div class="sh-login-brand">
+        <div class="brand-badge">
+          <span class="badge-dot"></span>
+          <span>StudentHub v2.1 SpringBoot</span>
+        </div>
+        <h1 class="brand-title">学生“一站式”自主管理过程管理系统</h1>
+        <p class="brand-desc">
+          基于全周期过程档案与时间戳记录，覆盖团员发展、社团活动、社区自治与勤工助学四大模块。
+        </p>
+
+        <div class="brand-features">
+          <div class="feature-item">
+            <el-icon class="feature-icon"><Check /></el-icon>
+            <span>多角色 RBAC / ABAC 权限动态切控</span>
+          </div>
+          <div class="feature-item">
+            <el-icon class="feature-icon"><Check /></el-icon>
+            <span>MinIO 对象存储分片上传与时效预览</span>
+          </div>
+          <div class="feature-item">
+            <el-icon class="feature-icon"><Check /></el-icon>
+            <span>Spring AI / DeepSeek 大模型综测自动考评</span>
           </div>
         </div>
-        <!-- 底部标语 -->
-        <div class="brand-slogan">
-          <div class="slogan-line" />
-          <span class="slogan-text">一个入口 · 一套身份 · 一条主线</span>
+
+        <div class="quick-preset-box">
+          <span class="preset-title">快速测试账户：</span>
+          <div class="preset-btns">
+            <el-tag class="preset-tag" effect="dark" type="primary" @click="fillAccount('admin', 'admin@123')">
+              系统管理员 (admin)
+            </el-tag>
+            <el-tag class="preset-tag" effect="dark" type="success" @click="fillAccount('2023010101', 'student@123')">
+              普通学生 (2023010101)
+            </el-tag>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 右侧：登录表单区 -->
-    <div class="login-form-panel">
-      <div class="form-container">
-        <div class="form-brand">
-          <img src="/images/logo.png" alt="Logo" class="form-logo" />
+      <!-- Right Panel: Interactive Form -->
+      <div class="sh-login-form-area">
+        <div class="form-header">
+          <h2>账号身份验证</h2>
+          <p>请使用学号 / 工号 / 管理员账号登录</p>
         </div>
-        <h2 class="form-title">欢迎回来</h2>
-        <p class="form-subtitle">请登录您的账号以继续</p>
 
         <el-form
           ref="formRef"
           :model="form"
           :rules="rules"
-          label-width="0"
           size="large"
+          class="sh-login-form"
           @keyup.enter="handleLogin"
         >
           <el-form-item prop="username">
             <el-input
               v-model="form.username"
-              placeholder="工号 / 学号 / 用户名"
+              placeholder="学号 / 工号 / 用户名"
               :prefix-icon="User"
+              clearable
             />
           </el-form-item>
 
@@ -55,24 +73,31 @@
             <el-input
               v-model="form.password"
               type="password"
-              placeholder="密码"
+              placeholder="请输入密码"
               :prefix-icon="Lock"
               show-password
             />
           </el-form-item>
 
-          <el-button
-            type="primary"
-            class="login-btn"
-            :loading="loading"
+          <div class="form-options">
+            <el-checkbox v-model="rememberMe" label="记住当前设备" />
+            <el-link type="primary" :underline="false">忘记密码？</el-link>
+          </div>
+
+          <button
+            type="button"
+            class="sh-btn-gradient login-submit-btn"
+            :disabled="loading"
             @click="handleLogin"
           >
-            登 录
-          </el-button>
+            <el-icon v-if="loading" class="is-loading"><Loading /></el-icon>
+            <el-icon v-else><Right /></el-icon>
+            <span>{{ loading ? '正在进行全身份验证...' : '立 即 登 录' }}</span>
+          </button>
         </el-form>
 
         <div class="form-footer">
-          <span>福州软件职业技术学院</span>
+          <span>StudentHub Management Center &copy; 2026</span>
         </div>
       </div>
     </div>
@@ -82,14 +107,18 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Lock } from '@element-plus/icons-vue'
+import { User, Lock, Check, Right, Loading } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import { useMenuStore } from '@/stores/menu'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const menuStore = useMenuStore()
 
 const formRef = ref(null)
 const loading = ref(false)
+const rememberMe = ref(true)
 
 const form = reactive({
   username: '',
@@ -97,274 +126,225 @@ const form = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入工号 / 学号 / 用户名', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入学号/工号/用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
-async function handleLogin() {
-  const valid = await formRef.value?.validate().catch(() => false)
-  if (!valid) return
+function fillAccount(u, p) {
+  form.username = u
+  form.password = p
+}
 
-  loading.value = true
-  try {
-    await authStore.login(form.username, form.password)
-    router.push('/dashboard')
-  } catch {
-    // http.js 已处理错误提示
-  } finally {
-    loading.value = false
-  }
+async function handleLogin() {
+  if (!formRef.value) return
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+    loading.value = true
+    try {
+      await authStore.login(form.username, form.password)
+      ElMessage.success(`登录成功！欢迎回来，${authStore.displayName}`)
+      await menuStore.fetchMenus(router)
+      router.push('/dashboard')
+    } catch (err) {
+      ElMessage.error(err?.message || '登录失败，请检查账号密码')
+    } finally {
+      loading.value = false
+    }
+  })
 }
 </script>
 
 <style scoped>
-.login-page {
-  display: flex;
+.sh-login-wrapper {
   min-height: 100vh;
-  background: var(--sh-bg-base);
-}
-
-/* ===== 左侧品牌区 + 轮播 ===== */
-.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sh-bg-main);
   position: relative;
-  flex: 1;
-  min-width: 420px;
   overflow: hidden;
+  padding: 20px;
 }
 
-/* 轮播容器 */
-.brand-slider {
+/* Glowing Ambient Orbs */
+.sh-orb {
   position: absolute;
-  inset: 0;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.orb-1 {
+  width: 450px;
+  height: 450px;
+  background: #6366f1;
+  top: -100px;
+  left: -100px;
+}
+.orb-2 {
+  width: 550px;
+  height: 550px;
+  background: #8b5cf6;
+  bottom: -150px;
+  right: -150px;
+}
+.orb-3 {
+  width: 350px;
+  height: 350px;
+  background: #06b6d4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
-.slide-img {
-  position: absolute;
-  inset: 0;
+.sh-login-card {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  animation-duration: 10s;
-  animation-iteration-count: infinite;
-  animation-timing-function: ease-in-out;
+  max-width: 980px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  z-index: 10;
 }
 
-.slide-1 {
-  opacity: 1;
-  animation-name: fade1;
-}
-
-.slide-2 {
-  opacity: 0;
-  animation-name: fade2;
-}
-
-@keyframes fade1 {
-  0%, 44%   { opacity: 1; }
-  50%, 94% { opacity: 0; }
-  100%      { opacity: 1; }
-}
-
-@keyframes fade2 {
-  0%, 44%   { opacity: 0; }
-  50%, 94% { opacity: 1; }
-  100%      { opacity: 0; }
-}
-
-.brand-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(27, 58, 75, 0.25) 0%,
-    rgba(45, 106, 122, 0.08) 40%,
-    rgba(27, 58, 75, 0.35) 100%
-  );
-  z-index: 1;
+/* Left Panel */
+.sh-login-brand {
+  padding: 48px;
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border-right: 1px solid var(--sh-border-color);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.brand-header {
-  position: absolute;
-  top: 32px;
-  left: 36px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 2;
-}
-
-.brand-logo {
-  height: 44px;
-  width: auto;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-}
-
-.brand-text {
-  display: flex;
+.brand-badge {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  position: relative;
-  top: -2px;
+  padding: 6px 14px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--sh-primary);
+  width: fit-content;
+}
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sh-primary);
+  box-shadow: 0 0 8px var(--sh-primary);
 }
 
-.brand-divider {
-  font-size: 28px;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.brand-subtitle {
-  font-size: 22px;
+.brand-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 26px;
   font-weight: 700;
-  color: #fff;
-  letter-spacing: 2px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  line-height: 1.35;
+  margin-top: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* 底部标语 */
-.brand-slogan {
-  position: absolute;
-  bottom: 40px;
-  left: 36px;
-  right: 36px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  z-index: 2;
-}
-.slogan-line {
-  flex: 1;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.3);
-}
-.slogan-text {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: var(--sh-text-sm);
-  letter-spacing: 4px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* ===== 右侧表单区 ===== */
-.login-form-panel {
-  flex: 0 0 480px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 60px;
-  background: var(--sh-bg-white);
-}
-
-.form-container {
-  width: 100%;
-  max-width: 340px;
-}
-
-.form-brand {
-  margin-bottom: var(--sh-space-xl);
-}
-.form-logo {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
-}
-
-.form-title {
-  margin: 0 0 8px 0;
-  font-size: var(--sh-text-3xl);
-  font-weight: 700;
-  color: var(--sh-text-primary);
-  letter-spacing: -0.01em;
-}
-
-.form-subtitle {
-  margin: 0 0 var(--sh-space-xl) 0;
-  font-size: var(--sh-text-md);
+.brand-desc {
+  font-size: 14px;
   color: var(--sh-text-secondary);
+  margin-top: 16px;
+  line-height: 1.6;
 }
 
-/* 表单项样式覆盖 */
-.form-container :deep(.el-form-item) {
-  margin-bottom: 20px;
+.brand-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 32px;
 }
-
-.form-container :deep(.el-input__wrapper) {
-  border-radius: var(--sh-radius-lg);
-  padding: 4px 16px;
-  box-shadow: 0 0 0 1px var(--sh-border) inset;
-  transition: box-shadow var(--sh-duration-fast) var(--sh-ease-out);
-}
-
-.form-container :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px var(--sh-border-dark) inset;
-}
-
-.form-container :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1.5px var(--sh-primary), 0 0 0 4px rgba(var(--sh-primary-rgb), 0.1);
-}
-
-.form-container :deep(.el-input__inner) {
-  height: 44px;
-  font-size: var(--sh-text-md);
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
   color: var(--sh-text-primary);
 }
-
-.form-container :deep(.el-input__prefix .el-icon) {
-  font-size: 17px;
-  color: var(--sh-text-placeholder);
+.feature-icon {
+  color: var(--sh-accent-emerald);
 }
 
-.form-container :deep(.el-input__inner::placeholder) {
-  color: var(--sh-text-placeholder);
+.quick-preset-box {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--sh-border-color);
+}
+.preset-title {
+  font-size: 12px;
+  color: var(--sh-text-muted);
+  display: block;
+  margin-bottom: 10px;
+}
+.preset-btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.preset-tag {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.preset-tag:hover {
+  transform: scale(1.05);
 }
 
-/* 登录按钮 */
-.login-btn {
+/* Right Panel */
+.sh-login-form-area {
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.form-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--sh-text-primary);
+}
+.form-header p {
+  font-size: 13px;
+  color: var(--sh-text-secondary);
+  margin-top: 6px;
+}
+
+.sh-login-form {
+  margin-top: 32px;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.login-submit-btn {
   width: 100%;
   height: 48px;
-  border-radius: var(--sh-radius-lg);
-  font-size: var(--sh-text-lg);
-  font-weight: 600;
-  letter-spacing: 6px;
-  background: var(--sh-primary);
-  border: none;
-  transition: all var(--sh-duration-fast) var(--sh-ease-out);
+  font-size: 16px;
+  justify-content: center;
 }
 
-.login-btn:hover {
-  background: var(--sh-primary-light);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(var(--sh-primary-rgb), 0.35);
-}
-
-.login-btn:active {
-  transform: translateY(0);
-  background: var(--sh-primary-dark);
-}
-
-/* 底部 */
 .form-footer {
-  margin-top: var(--sh-space-2xl);
   text-align: center;
-  font-size: var(--sh-text-xs);
-  color: var(--sh-text-placeholder);
-  letter-spacing: 1px;
+  font-size: 12px;
+  color: var(--sh-text-muted);
+  margin-top: 24px;
 }
 
-/* ===== 响应式适配 ===== */
-@media (max-width: 900px) {
-  .login-brand {
-    display: none;
+@media (max-width: 768px) {
+  .sh-login-card {
+    grid-template-columns: 1fr;
   }
-
-  .login-form-panel {
-    flex: 1;
-    min-width: 0;
-    padding: 32px 28px;
+  .sh-login-brand {
+    display: none;
   }
 }
 </style>

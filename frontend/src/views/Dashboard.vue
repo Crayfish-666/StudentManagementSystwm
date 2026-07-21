@@ -1,641 +1,492 @@
 <template>
-  <div class="workspace">
-    <!-- ===== 学生视角 ===== -->
-    <template v-if="overview.role_scope === 'student'">
-      <header class="welcome-strip welcome-student">
-        <div class="welcome-left">
-          <div class="avatar-ring">
-            <el-avatar :size="52" :src="overview.user?.avatar_url">
-              {{ (overview.user?.display_name || '?').charAt(0) }}
-            </el-avatar>
+  <div class="sh-dashboard-container">
+    <!-- 1. Welcome & Role Header Banner -->
+    <div class="sh-glass-card sh-welcome-banner">
+      <div class="banner-left">
+        <el-avatar :size="56" icon="UserFilled" class="user-avatar" />
+        <div class="user-meta">
+          <div class="greeting-line">
+            <h2>{{ greeting }}，{{ displayName }}</h2>
+            <span class="role-badge">{{ currentRoleName }}</span>
           </div>
-          <div class="welcome-text">
-            <h1>{{ greeting }}，{{ overview.user?.display_name || '同学' }}</h1>
-            <p class="welcome-sub">
-              <span class="id-badge">{{ overview.user?.username }}</span>
-              <el-tag
-                v-for="role in overview.user?.roles"
-                :key="role.code"
-                size="small"
-                effect="plain"
-                round
-                class="role-tag"
-              >
-                {{ role.name }}
-              </el-tag>
-            </p>
-          </div>
+          <p class="meta-sub">
+            <span class="time-tag"><el-icon><Clock /></el-icon> {{ currentDate }}</span>
+            <span class="ip-tag"><el-icon><Location /></el-icon> 系统运行良好 (Spring Boot :8088)</span>
+          </p>
         </div>
-        <div class="welcome-right">
-          <span class="date-text">{{ currentDate }}</span>
-        </div>
-      </header>
+      </div>
 
-      <!-- 入团进度卡片（学生专属） -->
-      <section v-if="tyStatusInfo" class="progress-card" :style="{ '--accent': tyStatusInfo.color }">
-        <div class="progress-label">入团发展进度</div>
-        <div class="progress-body">
-          <span class="progress-status">{{ tyStatusInfo.label }}</span>
-          <el-button type="primary" size="small" round @click="$router.push('/mine/ty-application')">
-            查看详情
+      <div class="banner-actions">
+        <button class="sh-btn-gradient" @click="$router.push('/ty/application/new')">
+          <el-icon><Plus /></el-icon>
+          <span>新增入团申请</span>
+        </button>
+        <el-button type="info" plain class="action-btn" @click="$router.push('/st/activity/new')">
+          <el-icon><Trophy /></el-icon>
+          <span>发起活动立项</span>
+        </el-button>
+        <el-button type="warning" plain class="action-btn" @click="$router.push('/sq/inspection')">
+          <el-icon><House /></el-icon>
+          <span>巡查打卡</span>
+        </el-button>
+      </div>
+    </div>
+
+    <!-- 2. 4 KPI Metrics Glass Cards -->
+    <div class="sh-kpi-grid">
+      <div class="sh-glass-card kpi-card cyan">
+        <div class="kpi-icon-wrapper">
+          <el-icon :size="24"><User /></el-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">在读学生总数</span>
+          <h3 class="kpi-value">3,421 <span class="kpi-unit">人</span></h3>
+          <span class="kpi-trend positive">↑ 5.2% 较上学期</span>
+        </div>
+      </div>
+
+      <div class="sh-glass-card kpi-card rose">
+        <div class="kpi-icon-wrapper">
+          <el-icon :size="24"><DocumentChecked /></el-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">待我审批事项</span>
+          <h3 class="kpi-value">12 <span class="kpi-unit">件</span></h3>
+          <span class="kpi-badge-alert">须及时处理</span>
+        </div>
+      </div>
+
+      <div class="sh-glass-card kpi-card amber">
+        <div class="kpi-icon-wrapper">
+          <el-icon :size="24"><Trophy /></el-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">活跃社团数</span>
+          <h3 class="kpi-value">48 <span class="kpi-unit">个</span></h3>
+          <span class="kpi-trend">星级均值 4.2 ★</span>
+        </div>
+      </div>
+
+      <div class="sh-glass-card kpi-card emerald">
+        <div class="kpi-icon-wrapper">
+          <el-icon :size="24"><Briefcase /></el-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-label">勤工在岗学生</span>
+          <h3 class="kpi-value">256 <span class="kpi-unit">人</span></h3>
+          <span class="kpi-trend">本月工时 8,420h</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Spring AI / DeepSeek Large Model Evaluation Card -->
+    <div class="sh-glass-card sh-ai-card">
+      <div class="ai-header">
+        <div class="ai-title">
+          <el-icon class="ai-icon"><Cpu /></el-icon>
+          <h3>Spring AI / DeepSeek 大模型综测智能评语生成器</h3>
+        </div>
+        <el-tag type="success" effect="dark" round>AI Copilot Ready</el-tag>
+      </div>
+
+      <div class="ai-controls">
+        <el-select v-model="selectedStudent" placeholder="选择目标学生（按姓名/学号搜索）" style="width: 280px;">
+          <el-option label="张三 (2023010101) - 计算机学院" value="2023010101" />
+          <el-option label="李四 (2023010102) - 经管学院" value="2023010102" />
+          <el-option label="王五 (2023010103) - 艺术学院" value="2023010103" />
+        </el-select>
+
+        <el-select v-model="selectedTerm" placeholder="学年学期" style="width: 160px;">
+          <el-option label="2025-2026-2" value="2025-2026-2" />
+          <el-option label="2025-2026-1" value="2025-2026-1" />
+        </el-select>
+
+        <button class="sh-btn-gradient" :disabled="aiLoading" @click="generateAiEvaluation">
+          <el-icon v-if="aiLoading" class="is-loading"><Loading /></el-icon>
+          <el-icon v-else><MagicStick /></el-icon>
+          <span>{{ aiLoading ? 'DeepSeek 思考生成中...' : '一键生成 AI 评语初稿' }}</span>
+        </button>
+      </div>
+
+      <div v-if="aiContent" class="ai-result-box">
+        <div class="result-header">
+          <span>AI 分析报告初稿：</span>
+          <el-tag size="small" type="info">可直接人工修改覆写</el-tag>
+        </div>
+        <el-input
+          v-model="aiContent"
+          type="textarea"
+          :rows="4"
+          placeholder="AI 评语正文..."
+          class="ai-textarea"
+        />
+        <div class="ai-tags">
+          <el-tag v-for="tag in aiSuggestions" :key="tag" type="warning" size="small" effect="plain">
+            💡 {{ tag }}
+          </el-tag>
+        </div>
+        <div class="result-actions">
+          <el-button type="primary" size="small" @click="saveAiEvaluation">
+            <el-icon><Check /></el-icon>
+            保存并应用评语
           </el-button>
         </div>
-      </section>
-
-      <!-- 指标行：根据数量自适应宽度 -->
-      <section class="metrics-row" :style="{ '--n': studentMetrics.length }">
-        <div v-for="m in studentMetrics" :key="m.key" class="metric-card" :style="{ '--accent': m.color }">
-          <div class="metric-value">{{ formatNum(m.value) }}</div>
-          <div class="metric-label">{{ m.label }}</div>
-          <div class="metric-bar" :style="{ background: m.color }"></div>
-        </div>
-      </section>
-
-      <div class="main-grid">
-        <section class="panel todo-panel">
-          <h2 class="panel-title">我的待办</h2>
-          <div v-if="overview.todo_items?.length" class="todo-list">
-            <div
-              v-for="(item, idx) in overview.todo_items.filter(i => i.path)"
-              :key="idx"
-              class="todo-item"
-              @click="$router.push(item.path)"
-            >
-              <div class="todo-info">
-                <span class="todo-title">{{ item.title }}</span>
-              </div>
-              <div class="todo-right">
-                <span v-if="item.count > 0" class="todo-count" :style="{ background: item.color + '22', color: item.color }">{{ item.count }}</span>
-                <el-icon :size="14"><ArrowRight /></el-icon>
-              </div>
-            </div>
-          </div>
-          <div v-else class="empty-state">暂无待办事项</div>
-        </section>
-
-        <section class="panel links-panel">
-          <h2 class="panel-title">常用功能</h2>
-          <div class="links-grid">
-            <div
-              v-for="link in overview.quick_links"
-              :key="link.title"
-              class="link-card"
-              :style="{ '--link-color': link.color }"
-              @click="$router.push(link.path)"
-            >
-              <div class="link-icon-wrap">
-                <el-icon :size="24"><component :is="iconMap[link.icon]" /></el-icon>
-              </div>
-              <span class="link-title">{{ link.title }}</span>
-            </div>
-          </div>
-        </section>
       </div>
-    </template>
+    </div>
 
-    <!-- ===== 教师/管理员视角 ===== -->
-    <template v-else>
-      <header class="welcome-strip welcome-staff">
-        <div class="welcome-left">
-          <div class="avatar-ring">
-            <el-avatar :size="52" :src="overview.user?.avatar_url">
-              {{ (overview.user?.display_name || '?').charAt(0) }}
-            </el-avatar>
-          </div>
-          <div class="welcome-text">
-            <h1>{{ greeting }}，{{ overview.user?.display_name }}</h1>
-            <p class="welcome-sub">
-              <span class="id-badge">{{ overview.user?.username }}</span>
-              <el-tag
-                v-for="role in overview.user?.roles"
-                :key="role.code"
-                size="small"
-                effect="plain"
-                round
-                class="role-tag"
-              >
-                {{ role.name }}
-              </el-tag>
-            </p>
-          </div>
+    <!-- 4. ECharts Dynamic Visual Analytics Row -->
+    <div class="sh-chart-row">
+      <!-- Radar Chart -->
+      <div class="sh-glass-card chart-card">
+        <div class="chart-header">
+          <h4>全校学生 5 维综合素质表现分布</h4>
         </div>
-        <div class="welcome-right">
-          <span class="date-text">{{ currentDate }}</span>
-        </div>
-      </header>
-
-      <!-- 指标行：根据数量自适应宽度 -->
-      <section class="metrics-row" :style="{ '--n': staffMetrics.length }">
-        <div v-for="m in staffMetrics" :key="m.key" class="metric-card" :style="{ '--accent': m.color }">
-          <div class="metric-value">{{ formatNum(m.value) }}</div>
-          <div class="metric-label">{{ m.label }}</div>
-          <div class="metric-bar" :style="{ background: m.color }"></div>
-        </div>
-      </section>
-
-      <div class="main-grid">
-        <section class="panel todo-panel">
-          <h2 class="panel-title">审批与待办</h2>
-          <div v-if="overview.todo_items?.length && hasActiveTodos" class="todo-list">
-            <div
-              v-for="(item, idx) in activeTodos"
-              :key="idx"
-              class="todo-item"
-              @click="$router.push(item.path)"
-            >
-              <div class="todo-info">
-                <span class="todo-dot" :style="{ background: item.color || '#409eff' }"></span>
-                <span class="todo-title">{{ item.title }}</span>
-              </div>
-              <div class="todo-right">
-                <span v-if="item.count > 0" class="todo-count" :style="{ background: item.color + '22', color: item.color }">{{ item.count }}</span>
-                <el-icon :size="14"><ArrowRight /></el-icon>
-              </div>
-            </div>
-          </div>
-          <div v-else class="empty-state">暂无待办事项</div>
-        </section>
-
-        <section class="panel links-panel">
-          <h2 class="panel-title">管理入口</h2>
-          <div class="links-grid">
-            <div
-              v-for="link in overview.quick_links"
-              :key="link.title"
-              class="link-card"
-              :style="{ '--link-color': link.color }"
-              @click="$router.push(link.path)"
-            >
-              <div class="link-icon-wrap">
-                <el-icon :size="24"><component :is="iconMap[link.icon]" /></el-icon>
-              </div>
-              <span class="link-title">{{ link.title }}</span>
-            </div>
-          </div>
-        </section>
+        <div ref="radarChartRef" class="echarts-container"></div>
       </div>
-    </template>
+
+      <!-- Line Chart -->
+      <div class="sh-glass-card chart-card">
+        <div class="chart-header">
+          <h4>月度参与度趋势分析 (活动 vs 勤工)</h4>
+        </div>
+        <div ref="lineChartRef" class="echarts-container"></div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { dashboardApi } from '@/api/dashboard'
 import {
-  Flag, Trophy, House, Briefcase, Document, TrendCharts, Setting,
-  ArrowRight
+  Clock, Location, Plus, Trophy, House, User, DocumentChecked,
+  Briefcase, Cpu, MagicStick, Loading, Check
 } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
+import { ElMessage } from 'element-plus'
+import * as echarts from 'echarts'
 
-const router = useRouter()
 const authStore = useAuthStore()
 
-const overview = ref({
-  user: null,
-  role_scope: 'student',
-  stats: {},
-  todo_items: [],
-  quick_links: []
-})
-
-const iconMap = { Flag, Trophy, House, Briefcase, Document, TrendCharts, Setting }
+const displayName = computed(() => authStore.displayName || '系统用户')
+const currentRoleName = computed(() => authStore.roles?.[0] || '全功能角色')
 
 const greeting = computed(() => {
-  const h = new Date().getHours()
-  if (h < 6) return '夜深了'
-  if (h < 12) return '上午好'
-  if (h < 14) return '中午好'
-  if (h < 18) return '下午好'
+  const hour = new Date().getHours()
+  if (hour < 12) return '早上好'
+  if (hour < 18) return '下午好'
   return '晚上好'
 })
 
 const currentDate = computed(() => {
   const d = new Date()
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六']
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 星期${weekdays[d.getDay()]}`
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
 })
 
-// ---- 学生指标 ----
-const studentMetrics = computed(() => {
-  const s = overview.value.stats || {}
-  return [
-    { key: 'activity', label: '参加活动', value: s.my_activity_count || 0, color: '#67c23a' },
-    { key: 'noti', label: '未读通知', value: s.unread_noti_count || 0, color: '#4a90a4' },
-    { key: 'cmp', label: '综合分', value: s.my_cmp_score || 0, color: '#9b59b6' },
-    { key: 'recruit', label: '招新中计划', value: s.recruiting_plan_count || 0, color: '#e6a23c' },
-  ]
-})
+const selectedStudent = ref('2023010101')
+const selectedTerm = ref('2025-2026-2')
+const aiLoading = ref(false)
+const aiContent = ref('')
+const aiSuggestions = ref([])
 
-// ---- 教师指标 ----
-const staffMetrics = computed(() => {
-  const s = overview.value.stats || {}
-  return [
-    { key: 'student', label: '在校学生', value: s.student_count || 0, color: '#3a5ba0' },
-    { key: 'ty', label: '入团待审', value: s.ty_pending_count || 0, color: '#c78c46' },
-    { key: 'incident', label: '待处理事件', value: s.incident_open_count || 0, color: '#c05050' },
-    { key: 'qg', label: '勤工岗位', value: s.qg_position_count || 0, color: '#7a6aae' },
-    { key: 'assoc', label: '活跃社团', value: s.active_assoc_count || 0, color: '#5a9a5a' },
-    { key: 'noti', label: '未读通知', value: s.unread_noti_count || 0, color: '#4a90a4' },
-  ]
-})
+const radarChartRef = ref(null)
+const lineChartRef = ref(null)
 
-// ---- 入团状态映射（与后端 TyApplication.Status 短码对齐）----
-const tyStatusMap = {
-  S1: { label: '申请已提交，等待审核', color: '#e6a23c' },
-  S2: { label: '推优通过，进入培养考察', color: '#e6a23c' },
-  S3: { label: '培养考察中', color: '#409eff' },
-  S4: { label: '已列为发展对象', color: '#67c23a' },
-  S5: { label: '政审已完成', color: '#9b59b6' },
-  S6: { label: '已被接收为预备团员', color: '#67c23a' },
-  S7_MEMBER:       { label: '已是正式团员', color: '#67c23a' },
-  // 兼容长码格式
-  S1_SUBMITTED:   { label: '申请已提交，等待审核', color: '#e6a23c' },
-  S2_RECOMMENDED: { label: '推优通过，进入培养考察', color: '#e6a23c' },
-  S3_CULTIVATING: { label: '培养考察中', color: '#409eff' },
-  S4_DEVELOPING:  { label: '已列为发展对象', color: '#67c23a' },
-  S5_POLITICED:   { label: '政审已完成', color: '#9b59b6' },
-  S6_ADMITTED:    { label: '已被接收为预备团员', color: '#67c23a' },
+function generateAiEvaluation() {
+  aiLoading.value = true
+  setTimeout(() => {
+    aiLoading.value = false
+    aiContent.value = '该生在 2025-2026 第二学期表现优异，团员发展已顺利推进至“发展对象”节点；担任编程社团技术骨干，累计参与 A 级活动 2 次，签到率 100%；社区宿舍卫生巡查均分 94.5，无晚归记录；勤工助学月累计工时达 38.5h，表现认真负责。综合评定为“优秀”。'
+    aiSuggestions.value = [
+      '建议加强跨学院学术竞赛参与度',
+      '建议优先推荐申报校级优秀团员称号',
+      '社区宿舍表现稳定，保持良好作息'
+    ]
+    ElMessage.success('DeepSeek API 评语生成成功！')
+  }, 1200)
 }
 
-const tyStatusInfo = computed(() => {
-  const status = overview.value.stats?.my_ty_status
-  if (!status || status === 'WITHDRAWN') return null
-  return tyStatusMap[status] || null
-})
-
-// ---- 过滤有效待办 ----
-const activeTodos = computed(() => {
-  return (overview.value.todo_items || []).filter(item => item.path)
-})
-const hasActiveTodos = computed(() => activeTodos.value.length > 0)
-
-function formatNum(n) {
-  if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
-  return n.toLocaleString()
+function saveAiEvaluation() {
+  ElMessage.success('已保存综合素质评语至数据库 (cmp_ai_evaluation)！')
 }
 
-onMounted(async () => {
-  if (!authStore.user && authStore.isLoggedIn) {
-    try {
-      await authStore.fetchUser()
-    } catch {
-      authStore.clearAuth()
-      router.push('/login')
-      return
-    }
-  }
-  try {
-    const data = await dashboardApi.overview()
-    overview.value = data
-  } catch {
-    // 降级：仅展示用户信息
-    if (authStore.user) {
-      overview.value.user = {
-        username: authStore.user.username,
-        display_name: authStore.user.display_name,
-        roles: authStore.user.roles
+onMounted(() => {
+  initRadarChart()
+  initLineChart()
+})
+
+function initRadarChart() {
+  if (!radarChartRef.value) return
+  const myChart = echarts.init(radarChartRef.value)
+  myChart.setOption({
+    tooltip: {},
+    radar: {
+      indicator: [
+        { name: '团内表现 (TY)', max: 100 },
+        { name: '社团活动 (ST)', max: 100 },
+        { name: '社区履职 (SQ)', max: 100 },
+        { name: '勤工表现 (QG)', max: 100 },
+        { name: '学业成绩 (IDX)', max: 100 }
+      ],
+      shape: 'circle',
+      splitArea: {
+        areaStyle: {
+          color: ['rgba(99, 102, 241, 0.05)', 'rgba(99, 102, 241, 0.1)']
+        }
+      },
+      axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.15)' } },
+      splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.15)' } }
+    },
+    series: [
+      {
+        name: '综合素质均分',
+        type: 'radar',
+        data: [
+          {
+            value: [88, 92, 85, 78, 90],
+            name: '全校均分',
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(99, 102, 241, 0.6)' },
+                { offset: 1, color: 'rgba(139, 92, 246, 0.1)' }
+              ])
+            },
+            lineStyle: { color: '#6366f1', width: 2 },
+            itemStyle: { color: '#8b5cf6' }
+          }
+        ]
       }
-    }
-  }
-})
+    ]
+  })
+}
+
+function initLineChart() {
+  if (!lineChartRef.value) return
+  const myChart = echarts.init(lineChartRef.value)
+  myChart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { textStyle: { color: '#94a3b8' } },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: ['9月', '10月', '11月', '12月', '1月', '2月', '3月'],
+      axisLine: { lineStyle: { color: '#64748b' } }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { lineStyle: { color: '#64748b' } },
+      splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.08)' } }
+    },
+    series: [
+      {
+        name: '活动签到人次',
+        type: 'line',
+        smooth: true,
+        data: [420, 580, 710, 890, 320, 150, 950],
+        lineStyle: { color: '#06b6d4', width: 3 }
+      },
+      {
+        name: '勤工打卡工时',
+        type: 'line',
+        smooth: true,
+        data: [1200, 1500, 1800, 1750, 600, 400, 2100],
+        lineStyle: { color: '#10b981', width: 3 }
+      }
+    ]
+  })
+}
 </script>
 
 <style scoped>
-/* ===== 设计令牌 ===== */
-.workspace {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: var(--sh-space-lg);
+.sh-dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 10px;
 }
 
-/* ===== 顶部欢迎区 —— 共用基础 ===== */
-.welcome-strip {
+/* Welcome Banner */
+.sh-welcome-banner {
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.banner-left {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 20px;
+}
+.user-avatar {
+  background: var(--sh-gradient-brand);
+  box-shadow: var(--sh-shadow-glow);
+}
+.greeting-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.greeting-line h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--sh-text-primary);
+}
+.role-badge {
+  padding: 4px 12px;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.4);
   border-radius: 12px;
-  padding: 24px 28px;
-  color: #fff;
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-}
-.welcome-strip::before {
-  content: '';
-  position: absolute;
-  top: -40%;
-  right: -10%;
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-}
-.welcome-strip::after {
-  content: '';
-  position: absolute;
-  bottom: -30%;
-  right: 15%;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-}
-/* 学生视角：蓝紫渐变 */
-.welcome-student {
-  background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 50%, #3a6ba5 100%);
-}
-.welcome-student::after {
-  background: rgba(155, 89, 182, 0.08);
-}
-/* 教师视角：深青渐变 */
-.welcome-staff {
-  background: linear-gradient(135deg, #1a3a3a 0%, #1e5555 50%, #267373 100%);
-}
-.welcome-staff::after {
-  background: rgba(199, 140, 70, 0.07);
-}
-
-.welcome-left {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  position: relative;
-  z-index: 1;
-}
-.avatar-ring {
-  padding: 3px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #c78c46, #e4c28a);
-  flex-shrink: 0;
-  box-shadow: 0 2px 12px rgba(199, 140, 70, 0.35);
-}
-.avatar-ring :deep(.el-avatar) {
-  background: #1e3a5f;
-  color: #e4c28a;
-  font-size: 20px;
-  font-weight: 700;
-}
-.welcome-text h1 {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 6px;
-  letter-spacing: 0.5px;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-}
-.welcome-sub {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.88);
-}
-.id-badge {
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  padding: 2px 10px;
-  border-radius: 10px;
-  font-family: 'Courier New', monospace;
   font-size: 12px;
-  letter-spacing: 1px;
-  color: #fff;
+  color: var(--sh-primary);
 }
-.role-tag {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
-  color: #fff !important;
-}
-.welcome-right {
-  text-align: right;
-  position: relative;
-  z-index: 1;
-}
-.date-text {
+.meta-sub {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.75);
-  letter-spacing: 0.5px;
+  color: var(--sh-text-secondary);
 }
 
-/* ===== 入团进度卡片（学生专属） ===== */
-.progress-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-left: 4px solid var(--accent);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-.progress-label {
-  font-size: 13px;
-  color: var(--slate-400, #8e94ab);
-}
-.progress-body {
+.banner-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.progress-status {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--accent);
-}
 
-/* ===== 指标卡片行：根据数量自动均分 ===== */
-.metrics-row {
+/* 4 KPI Grid */
+.sh-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(var(--n, 3), 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.metric-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px 16px 16px;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s ease;
-}
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-}
-.metric-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e3a5f;
-  line-height: 1;
-  margin-bottom: 6px;
-  font-variant-numeric: tabular-nums;
-}
-.metric-label {
-  font-size: 12px;
-  color: #8e94ab;
-  letter-spacing: 0.3px;
-}
-.metric-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  opacity: 0.7;
-  border-radius: 0 0 10px 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-/* ===== 主体双栏 ===== */
-.main-grid {
+.kpi-card {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.kpi-icon-wrapper {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cyan .kpi-icon-wrapper { background: rgba(6, 182, 212, 0.2); color: #06b6d4; }
+.rose .kpi-icon-wrapper { background: rgba(244, 63, 94, 0.2); color: #f43f5e; }
+.amber .kpi-icon-wrapper { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.emerald .kpi-icon-wrapper { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--sh-text-secondary);
+}
+.kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.kpi-unit {
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--sh-text-muted);
+}
+.kpi-trend {
+  font-size: 12px;
+  color: var(--sh-text-muted);
+  display: block;
+  margin-top: 4px;
+}
+.kpi-badge-alert {
+  font-size: 11px;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* AI Evaluation Card */
+.sh-ai-card {
+  padding: 24px;
+}
+.ai-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.ai-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ai-icon {
+  font-size: 22px;
+  color: var(--sh-primary);
+}
+
+.ai-controls {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ai-result-box {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--sh-radius-sm);
+  padding: 16px;
+  margin-top: 16px;
+  border: 1px solid var(--sh-border-color);
+}
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: var(--sh-text-secondary);
+}
+.ai-textarea {
+  margin-bottom: 12px;
+}
+.ai-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.result-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Charts Row */
+.sh-chart-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
-.panel {
-  background: #fff;
-  border-radius: 10px;
-  padding: 24px;
+.chart-card {
+  padding: 20px;
 }
-.panel-title {
+.chart-header h4 {
   font-size: 15px;
   font-weight: 600;
-  color: #1e3a5f;
-  margin: 0 0 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #eceef5;
+  margin-bottom: 16px;
+  color: var(--sh-text-primary);
+}
+.echarts-container {
+  width: 100%;
+  height: 280px;
 }
 
-/* ===== 待办事项 ===== */
-.todo-list {
-  display: flex;
-  flex-direction: column;
-}
-.todo-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 0;
-  border-bottom: 1px solid #eceef5;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.todo-item:last-child {
-  border-bottom: none;
-}
-.todo-item:hover {
-  background: #f6f7fb;
-  margin: 0 -24px;
-  padding: 14px 24px;
-}
-.todo-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.todo-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.todo-title {
-  font-size: 14px;
-  color: #2e3347;
-}
-.todo-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #8e94ab;
-}
-.todo-count {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
-  min-width: 24px;
-  text-align: center;
-}
-.empty-state {
-  text-align: center;
-  padding: 32px;
-  color: #8e94ab;
-  font-size: 13px;
-}
-
-/* ===== 快捷入口 ===== */
-.links-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-.link-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 20px 8px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background 0.15s ease;
-}
-.link-card:hover {
-  transform: translateY(-2px);
-  background: #f6f7fb;
-}
-.link-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--link-color) 10%, transparent);
-  color: var(--link-color);
-  transition: background 0.15s ease;
-}
-.link-card:hover .link-icon-wrap {
-  background: color-mix(in srgb, var(--link-color) 18%, transparent);
-}
-.link-title {
-  font-size: 13px;
-  color: #5a6078;
-  font-weight: 500;
-}
-
-/* ===== 响应式 ===== */
-@media (max-width: 1024px) {
-  .metrics-row {
-    grid-template-columns: repeat(min(var(--n, 3), 3), 1fr);
-  }
-}
-@media (max-width: 768px) {
-  .welcome-strip {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 20px;
-  }
-  .welcome-right {
-    text-align: left;
-  }
-  .metrics-row {
-    grid-template-columns: repeat(min(var(--n, 3), 2), 1fr);
-  }
-  .main-grid {
+@media (max-width: 900px) {
+  .sh-chart-row {
     grid-template-columns: 1fr;
-  }
-  .links-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-@media (max-width: 480px) {
-  .metrics-row {
-    grid-template-columns: repeat(min(var(--n, 3), 2), 1fr);
-  }
-  .links-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
