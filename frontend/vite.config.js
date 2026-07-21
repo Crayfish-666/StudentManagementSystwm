@@ -2,7 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// Vite 配置：开发期代理 /api → Spring Boot 后端 8088；@ 别名指向 src。
+// Vite 配置：开发期代理 /api → Java Spring Boot 后端 8088；@ 别名指向 src。
 export default defineConfig({
   plugins: [vue()],
   resolve: {
@@ -16,7 +16,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8088',
+        target: 'http://127.0.0.1:8088',
         changeOrigin: true
       }
     }

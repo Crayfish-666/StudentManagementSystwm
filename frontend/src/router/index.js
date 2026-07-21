@@ -21,211 +21,211 @@ const staticRoutes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/Dashboard.vue'),
-        meta: { title: '工作台', requiresAuth: true }
+        meta: { title: '工作台', requiresAuth: true, permission: '*', module: 'dashboard', icon: 'Odometer', keepAlive: true }
       },
       {
         path: 'sys/dict',
         name: 'DictManage',
         component: () => import('@/views/sys/DictManage.vue'),
-        meta: { title: '字典管理', requiresAuth: true }
+        meta: { title: '字典管理', requiresAuth: true, permission: 'R-SY-ADMIN', module: 'sys', icon: 'Collection', keepAlive: true }
       },
       // TY 入团申请页面（非菜单路由，由列表页跳转）
       {
         path: 'ty/application/new',
         name: 'TyApplicationCreate',
         component: () => import('@/views/ty/ApplicationForm.vue'),
-        meta: { title: '新增入团申请', requiresAuth: true }
+        meta: { title: '新增入团申请', requiresAuth: true, permission: '*', module: 'ty', icon: 'EditPen', keepAlive: false }
       },
       {
         path: 'ty/application/:id/edit',
         name: 'TyApplicationEdit',
         component: () => import('@/views/ty/ApplicationForm.vue'),
-        meta: { title: '编辑入团申请', requiresAuth: true }
+        meta: { title: '编辑入团申请', requiresAuth: true, permission: '*', module: 'ty', icon: 'EditPen', keepAlive: false }
       },
       {
         path: 'ty/application/:id',
         name: 'TyApplicationDetail',
         component: () => import('@/views/ty/ApplicationDetail.vue'),
-        meta: { title: '入团申请详情', requiresAuth: true }
+        meta: { title: '入团申请详情', requiresAuth: true, permission: '*', module: 'ty', icon: 'Document', keepAlive: false }
       },
       // ST 社团活动页面
       {
         path: 'st/association/new',
         name: 'StAssociationCreate',
         component: () => import('@/views/st/AssociationForm.vue'),
-        meta: { title: '新建社团', requiresAuth: true }
+        meta: { title: '新建社团', requiresAuth: true, permission: '*', module: 'st', icon: 'Plus', keepAlive: false }
       },
       {
         path: 'st/association/:id/edit',
         name: 'StAssociationEdit',
         component: () => import('@/views/st/AssociationForm.vue'),
-        meta: { title: '编辑社团', requiresAuth: true }
+        meta: { title: '编辑社团', requiresAuth: true, permission: '*', module: 'st', icon: 'EditPen', keepAlive: false }
       },
       {
         path: 'st/association/:id',
         name: 'StAssociationDetail',
         component: () => import('@/views/st/AssociationDetail.vue'),
-        meta: { title: '社团详情', requiresAuth: true }
+        meta: { title: '社团详情', requiresAuth: true, permission: '*', module: 'st', icon: 'Document', keepAlive: false }
       },
       {
         path: 'st/activity/new',
         name: 'StActivityCreate',
         component: () => import('@/views/st/ActivityForm.vue'),
-        meta: { title: '新建活动', requiresAuth: true }
+        meta: { title: '新建活动', requiresAuth: true, permission: '*', module: 'st', icon: 'Plus', keepAlive: false }
       },
       {
         path: 'st/activity/:id/edit',
         name: 'StActivityEdit',
         component: () => import('@/views/st/ActivityForm.vue'),
-        meta: { title: '编辑活动', requiresAuth: true }
+        meta: { title: '编辑活动', requiresAuth: true, permission: '*', module: 'st', icon: 'EditPen', keepAlive: false }
       },
       {
         path: 'st/activity/approval',
         name: 'StActivityApproval',
         component: () => import('@/views/st/ActivityApproval.vue'),
-        meta: { title: '活动审批', requiresAuth: true }
+        meta: { title: '活动审批', requiresAuth: true, permission: '*', module: 'st', icon: 'Stamp', keepAlive: true }
       },
       {
         path: 'st/activity/:id',
         name: 'StActivityDetail',
         component: () => import('@/views/st/ActivityDetail.vue'),
-        meta: { title: '活动详情', requiresAuth: true }
+        meta: { title: '活动详情', requiresAuth: true, permission: '*', module: 'st', icon: 'Document', keepAlive: false }
       },
       {
         path: 'st/activity/:id/checkin',
         name: 'StActivityCheckin',
         component: () => import('@/views/st/ActivityCheckin.vue'),
-        meta: { title: '活动签到', requiresAuth: true }
+        meta: { title: '活动签到', requiresAuth: true, permission: '*', module: 'st', icon: 'CircleCheck', keepAlive: false }
       },
       {
         path: 'st/activity/:id/summary',
         name: 'StActivitySummary',
         component: () => import('@/views/st/ActivitySummary.vue'),
-        meta: { title: '活动总结', requiresAuth: true }
+        meta: { title: '活动总结', requiresAuth: true, permission: '*', module: 'st', icon: 'Document', keepAlive: false }
       },
       // ST 招新计划页面（非菜单路由，由列表页跳转）
       {
         path: 'st/recruit-plan/new',
         name: 'StRecruitPlanCreate',
         component: () => import('@/views/st/RecruitPlanForm.vue'),
-        meta: { title: '新建招新计划', requiresAuth: true }
+        meta: { title: '新建招新计划', requiresAuth: true, permission: '*', module: 'st', icon: 'Plus', keepAlive: false }
       },
       {
         path: 'st/recruit-plan/:id/edit',
         name: 'StRecruitPlanEdit',
         component: () => import('@/views/st/RecruitPlanForm.vue'),
-        meta: { title: '编辑招新计划', requiresAuth: true }
+        meta: { title: '编辑招新计划', requiresAuth: true, permission: '*', module: 'st', icon: 'EditPen', keepAlive: false }
       },
       {
         path: 'st/recruit-plan/:id',
         name: 'StRecruitPlanDetail',
         component: () => import('@/views/st/RecruitPlanDetail.vue'),
-        meta: { title: '招新计划详情', requiresAuth: true }
+        meta: { title: '招新计划详情', requiresAuth: true, permission: '*', module: 'st', icon: 'Document', keepAlive: false }
       },
       // 通知中心
       {
         path: 'notifications',
         name: 'NotificationCenter',
         component: () => import('@/views/notifications/NotificationCenter.vue'),
-        meta: { title: '通知中心', requiresAuth: true }
+        meta: { title: '通知中心', requiresAuth: true, permission: '*', module: 'noti', icon: 'Bell', keepAlive: true }
       },
       // SQ 学生社区页面
       {
         path: 'sq/inspection/new',
         name: 'SqInspectionCreate',
         component: () => import('@/views/sq/InspectionForm.vue'),
-        meta: { title: '新增巡查', requiresAuth: true }
+        meta: { title: '新增巡查', requiresAuth: true, permission: '*', module: 'sq', icon: 'Plus', keepAlive: false }
       },
       {
         path: 'sq/inspection/:id',
         name: 'SqInspectionDetail',
         component: () => import('@/views/sq/InspectionDetail.vue'),
-        meta: { title: '巡查详情', requiresAuth: true }
+        meta: { title: '巡查详情', requiresAuth: true, permission: '*', module: 'sq', icon: 'Document', keepAlive: false }
       },
       {
         path: 'sq/incident/new',
         name: 'SqIncidentCreate',
         component: () => import('@/views/sq/IncidentReport.vue'),
-        meta: { title: '上报事件', requiresAuth: true }
+        meta: { title: '上报事件', requiresAuth: true, permission: '*', module: 'sq', icon: 'Warning', keepAlive: false }
       },
       {
         path: 'sq/incident/:id',
         name: 'SqIncidentDetail',
         component: () => import('@/views/sq/IncidentDetail.vue'),
-        meta: { title: '事件详情', requiresAuth: true }
+        meta: { title: '事件详情', requiresAuth: true, permission: '*', module: 'sq', icon: 'Document', keepAlive: false }
       },
       // CMP 综合看板兜底路由（菜单 store 也会动态注册；此处避免菜单 API 失败时无法访问）
       {
         path: 'cmp/dashboard',
         name: 'CmpDashboard',
         component: () => import('@/views/cmp/Dashboard.vue'),
-        meta: { title: '管理驾驶舱', requiresAuth: true }
+        meta: { title: '管理驾驶舱', requiresAuth: true, permission: '*', module: 'cmp', icon: 'DataAnalysis', keepAlive: true }
       },
       {
         path: 'cmp/ranking',
         name: 'CmpRanking',
         component: () => import('@/views/cmp/ScoreRanking.vue'),
-        meta: { title: '综合分排行', requiresAuth: true }
+        meta: { title: '综合分排行', requiresAuth: true, permission: '*', module: 'cmp', icon: 'Trophy', keepAlive: true }
       },
       {
         path: 'mine/score',
         name: 'MyScore',
         component: () => import('@/views/cmp/MyScore.vue'),
-        meta: { title: '我的综合分', requiresAuth: true }
+        meta: { title: '我的综合分', requiresAuth: true, permission: '*', module: 'mine', icon: 'Star', keepAlive: true }
       },
       // ===== 菜单页面静态兜底路由（防刷新时动态路由未加载导致 404）=====
       // TY 团员发展
-      { path: 'ty', name: 'TyHome', component: () => import('@/views/ty/ApplicationList.vue'), meta: { title: '团员发展', requiresAuth: true } },
-      { path: 'ty/application', name: 'TyApplication', component: () => import('@/views/ty/ApplicationList.vue'), meta: { title: '入团申请', requiresAuth: true } },
-      { path: 'ty/approval', name: 'TyApproval', component: () => import('@/views/ty/ApprovalCenter.vue'), meta: { title: '审批中心', requiresAuth: true } },
+      { path: 'ty', name: 'TyHome', component: () => import('@/views/ty/ApplicationList.vue'), meta: { title: '团员发展', requiresAuth: true, permission: '*', module: 'ty', icon: 'Flag', keepAlive: true } },
+      { path: 'ty/application', name: 'TyApplication', component: () => import('@/views/ty/ApplicationList.vue'), meta: { title: '入团申请', requiresAuth: true, permission: '*', module: 'ty', icon: 'Document', keepAlive: true } },
+      { path: 'ty/approval', name: 'TyApproval', component: () => import('@/views/ty/ApprovalCenter.vue'), meta: { title: '审批中心', requiresAuth: true, permission: '*', module: 'ty', icon: 'Stamp', keepAlive: true } },
       // 推优大会
-      { path: 'ty/recommendation-meeting/new', name: 'TyRecMeetingCreate', component: () => import('@/views/ty/RecommendationMeetingForm.vue'), meta: { title: '新建推优大会', requiresAuth: true } },
-      { path: 'ty/recommendation-meeting', name: 'TyRecMeetingList', component: () => import('@/views/ty/RecommendationMeetingList.vue'), meta: { title: '推优大会', requiresAuth: true } },
+      { path: 'ty/recommendation-meeting/new', name: 'TyRecMeetingCreate', component: () => import('@/views/ty/RecommendationMeetingForm.vue'), meta: { title: '新建推优大会', requiresAuth: true, permission: '*', module: 'ty', icon: 'Plus', keepAlive: false } },
+      { path: 'ty/recommendation-meeting', name: 'TyRecMeetingList', component: () => import('@/views/ty/RecommendationMeetingList.vue'), meta: { title: '推优大会', requiresAuth: true, permission: '*', module: 'ty', icon: 'Trophy', keepAlive: true } },
       // 培养记录
-      { path: 'ty/cultivation', name: 'TyCultivation', component: () => import('@/views/ty/CultivationView.vue'), meta: { title: '培养记录管理', requiresAuth: true } },
+      { path: 'ty/cultivation', name: 'TyCultivation', component: () => import('@/views/ty/CultivationView.vue'), meta: { title: '培养记录管理', requiresAuth: true, permission: '*', module: 'ty', icon: 'Reading', keepAlive: true } },
       // 发展对象
-      { path: 'ty/development-object', name: 'TyDevObject', component: () => import('@/views/ty/DevelopmentObjectView.vue'), meta: { title: '发展对象管理', requiresAuth: true } },
+      { path: 'ty/development-object', name: 'TyDevObject', component: () => import('@/views/ty/DevelopmentObjectView.vue'), meta: { title: '发展对象管理', requiresAuth: true, permission: '*', module: 'ty', icon: 'UserFilled', keepAlive: true } },
       // 政审
-      { path: 'ty/political-review', name: 'TyPoliticalReview', component: () => import('@/views/ty/PoliticalReviewView.vue'), meta: { title: '政审管理', requiresAuth: true } },
+      { path: 'ty/political-review', name: 'TyPoliticalReview', component: () => import('@/views/ty/PoliticalReviewView.vue'), meta: { title: '政审管理', requiresAuth: true, permission: '*', module: 'ty', icon: 'Search', keepAlive: true } },
       // 发展大会
-      { path: 'ty/development-meeting', name: 'TyDevMeeting', component: () => import('@/views/ty/DevelopmentMeetingView.vue'), meta: { title: '发展大会', requiresAuth: true } },
+      { path: 'ty/development-meeting', name: 'TyDevMeeting', component: () => import('@/views/ty/DevelopmentMeetingView.vue'), meta: { title: '发展大会', requiresAuth: true, permission: '*', module: 'ty', icon: 'VideoCamera', keepAlive: true } },
       // 转正流程
-      { path: 'ty/probationary', name: 'TyProbationary', component: () => import('@/views/ty/ProbationaryView.vue'), meta: { title: '转正流程', requiresAuth: true } },
+      { path: 'ty/probationary', name: 'TyProbationary', component: () => import('@/views/ty/ProbationaryView.vue'), meta: { title: '转正流程', requiresAuth: true, permission: '*', module: 'ty', icon: 'Promotion', keepAlive: true } },
       // 团员花名册
-      { path: 'ty/member-roster', name: 'TyMemberRoster', component: () => import('@/views/ty/MemberRoster.vue'), meta: { title: '团员花名册', requiresAuth: true } },
+      { path: 'ty/member-roster', name: 'TyMemberRoster', component: () => import('@/views/ty/MemberRoster.vue'), meta: { title: '团员花名册', requiresAuth: true, permission: '*', module: 'ty', icon: 'Notebook', keepAlive: true } },
       // 团员发展轨迹
-      { path: 'ty/students/:id/development-track', name: 'TyDevelopmentTrack', component: () => import('@/views/ty/DevelopmentTrackView.vue'), meta: { title: '发展轨迹', requiresAuth: true } },
+      { path: 'ty/students/:id/development-track', name: 'TyDevelopmentTrack', component: () => import('@/views/ty/DevelopmentTrackView.vue'), meta: { title: '发展轨迹', requiresAuth: true, permission: '*', module: 'ty', icon: 'TrendCharts', keepAlive: false } },
       // ST 社团活动
-      { path: 'st', name: 'StHome', component: () => import('@/views/st/AssociationList.vue'), meta: { title: '社团活动', requiresAuth: true } },
-      { path: 'st/association', name: 'StAssociation', component: () => import('@/views/st/AssociationList.vue'), meta: { title: '社团管理', requiresAuth: true } },
-      { path: 'st/recruit-plan', name: 'StRecruitPlan', component: () => import('@/views/st/RecruitPlanList.vue'), meta: { title: '招新计划', requiresAuth: true } },
-      { path: 'st/recruit-apply', name: 'StRecruitApply', component: () => import('@/views/st/RecruitApplyList.vue'), meta: { title: '招新申请', requiresAuth: true } },
-      { path: 'st/activity', name: 'StActivity', component: () => import('@/views/st/ActivityList.vue'), meta: { title: '活动管理', requiresAuth: true } },
+      { path: 'st', name: 'StHome', component: () => import('@/views/st/AssociationList.vue'), meta: { title: '社团活动', requiresAuth: true, permission: '*', module: 'st', icon: 'Trophy', keepAlive: true } },
+      { path: 'st/association', name: 'StAssociation', component: () => import('@/views/st/AssociationList.vue'), meta: { title: '社团管理', requiresAuth: true, permission: '*', module: 'st', icon: 'OfficeBuilding', keepAlive: true } },
+      { path: 'st/recruit-plan', name: 'StRecruitPlan', component: () => import('@/views/st/RecruitPlanList.vue'), meta: { title: '招新计划', requiresAuth: true, permission: '*', module: 'st', icon: 'Memo', keepAlive: true } },
+      { path: 'st/recruit-apply', name: 'StRecruitApply', component: () => import('@/views/st/RecruitApplyList.vue'), meta: { title: '招新申请', requiresAuth: true, permission: '*', module: 'st', icon: 'DocumentAdd', keepAlive: true } },
+      { path: 'st/activity', name: 'StActivity', component: () => import('@/views/st/ActivityList.vue'), meta: { title: '活动管理', requiresAuth: true, permission: '*', module: 'st', icon: 'Calendar', keepAlive: true } },
       // SQ 学生社区
-      { path: 'sq', name: 'SqHome', component: () => import('@/views/sq/InspectionList.vue'), meta: { title: '学生社区', requiresAuth: true } },
-      { path: 'sq/building', name: 'SqBuilding', component: () => import('@/views/sq/BuildingTree.vue'), meta: { title: '楼栋管理', requiresAuth: true } },
-      { path: 'sq/inspection', name: 'SqInspection', component: () => import('@/views/sq/InspectionList.vue'), meta: { title: '巡查记录', requiresAuth: true } },
-      { path: 'sq/incident', name: 'SqIncident', component: () => import('@/views/sq/IncidentList.vue'), meta: { title: '异常事件', requiresAuth: true } },
+      { path: 'sq', name: 'SqHome', component: () => import('@/views/sq/InspectionList.vue'), meta: { title: '学生社区', requiresAuth: true, permission: '*', module: 'sq', icon: 'House', keepAlive: true } },
+      { path: 'sq/building', name: 'SqBuilding', component: () => import('@/views/sq/BuildingTree.vue'), meta: { title: '楼栋管理', requiresAuth: true, permission: '*', module: 'sq', icon: 'OfficeBuilding', keepAlive: true } },
+      { path: 'sq/inspection', name: 'SqInspection', component: () => import('@/views/sq/InspectionList.vue'), meta: { title: '巡查记录', requiresAuth: true, permission: '*', module: 'sq', icon: 'View', keepAlive: true } },
+      { path: 'sq/incident', name: 'SqIncident', component: () => import('@/views/sq/IncidentList.vue'), meta: { title: '异常事件', requiresAuth: true, permission: '*', module: 'sq', icon: 'Warning', keepAlive: true } },
       // QG 勤工助学
-      { path: 'qg', name: 'QgHome', component: () => import('@/views/qg/PositionList.vue'), meta: { title: '勤工助学', requiresAuth: true } },
-      { path: 'qg/difficulty', name: 'QgDifficulty', component: () => import('@/views/qg/DifficultyList.vue'), meta: { title: '困难认定', requiresAuth: true } },
-      { path: 'qg/position', name: 'QgPosition', component: () => import('@/views/qg/PositionList.vue'), meta: { title: '岗位管理', requiresAuth: true } },
-      { path: 'qg/attendance', name: 'QgAttendance', component: () => import('@/views/qg/AttendanceRecord.vue'), meta: { title: '工时打卡', requiresAuth: true } },
+      { path: 'qg', name: 'QgHome', component: () => import('@/views/qg/PositionList.vue'), meta: { title: '勤工助学', requiresAuth: true, permission: '*', module: 'qg', icon: 'Briefcase', keepAlive: true } },
+      { path: 'qg/difficulty', name: 'QgDifficulty', component: () => import('@/views/qg/DifficultyList.vue'), meta: { title: '困难认定', requiresAuth: true, permission: '*', module: 'qg', icon: 'InfoFilled', keepAlive: true } },
+      { path: 'qg/position', name: 'QgPosition', component: () => import('@/views/qg/PositionList.vue'), meta: { title: '岗位管理', requiresAuth: true, permission: '*', module: 'qg', icon: 'Suitcase', keepAlive: true } },
+      { path: 'qg/attendance', name: 'QgAttendance', component: () => import('@/views/qg/AttendanceRecord.vue'), meta: { title: '工时打卡', requiresAuth: true, permission: '*', module: 'qg', icon: 'Timer', keepAlive: true } },
       // 我的申请
-      { path: 'mine', name: 'MineHome', component: () => import('@/views/cmp/MyScore.vue'), meta: { title: '我的申请', requiresAuth: true } },
-      { path: 'mine/ty-development', name: 'MineTyDevelopment', component: () => import('@/views/ty/MyDevelopment.vue'), meta: { title: '我的团员发展', requiresAuth: true } },
-      { path: 'mine/ty-application', name: 'MineTyApplication', component: () => import('@/views/ty/ApplicationList.vue'), meta: { title: '我的入团申请', requiresAuth: true } },
-      { path: 'mine/thought-report', name: 'MineThoughtReport', component: () => import('@/views/ty/MyThoughtReport.vue'), meta: { title: '我的思想汇报', requiresAuth: true } },
-      { path: 'mine/activity', name: 'MineActivity', component: () => import('@/views/st/ActivityList.vue'), meta: { title: '我的社团', requiresAuth: true } },
-      { path: 'mine/work', name: 'MineWork', component: () => import('@/views/qg/AttendanceRecord.vue'), meta: { title: '我的勤工', requiresAuth: true } },
-      { path: 'mine/profile', name: 'MineProfile', component: () => import('@/views/idx/MyProfile.vue'), meta: { title: '我的档案', requiresAuth: true } },
+      { path: 'mine', name: 'MineHome', component: () => import('@/views/cmp/MyScore.vue'), meta: { title: '我的申请', requiresAuth: true, permission: '*', module: 'mine', icon: 'User', keepAlive: true } },
+      { path: 'mine/ty-development', name: 'MineTyDevelopment', component: () => import('@/views/ty/MyDevelopment.vue'), meta: { title: '我的团员发展', requiresAuth: true, permission: '*', module: 'mine', icon: 'Flag', keepAlive: true } },
+      { path: 'mine/ty-application', name: 'MineTyApplication', component: () => import('@/views/ty/ApplicationList.vue'), meta: { title: '我的入团申请', requiresAuth: true, permission: '*', module: 'mine', icon: 'Document', keepAlive: true } },
+      { path: 'mine/thought-report', name: 'MineThoughtReport', component: () => import('@/views/ty/MyThoughtReport.vue'), meta: { title: '我的思想汇报', requiresAuth: true, permission: '*', module: 'mine', icon: 'EditPen', keepAlive: true } },
+      { path: 'mine/activity', name: 'MineActivity', component: () => import('@/views/st/ActivityList.vue'), meta: { title: '我的社团', requiresAuth: true, permission: '*', module: 'mine', icon: 'Trophy', keepAlive: true } },
+      { path: 'mine/work', name: 'MineWork', component: () => import('@/views/qg/AttendanceRecord.vue'), meta: { title: '我的勤工', requiresAuth: true, permission: '*', module: 'mine', icon: 'Briefcase', keepAlive: true } },
+      { path: 'mine/profile', name: 'MineProfile', component: () => import('@/views/idx/MyProfile.vue'), meta: { title: '我的档案', requiresAuth: true, permission: '*', module: 'mine', icon: 'Postcard', keepAlive: true } },
       // IDX 学生管理
-      { path: 'idx/student', name: 'IdxStudent', component: () => import('@/views/idx/StudentList.vue'), meta: { title: '学生列表', requiresAuth: true } },
-      { path: 'idx/import', name: 'IdxImport', component: () => import('@/views/idx/StudentImport.vue'), meta: { title: '学生导入', requiresAuth: true } },
+      { path: 'idx/student', name: 'IdxStudent', component: () => import('@/views/idx/StudentList.vue'), meta: { title: '学生列表', requiresAuth: true, permission: 'R-SY-ADMIN', module: 'idx', icon: 'List', keepAlive: true } },
+      { path: 'idx/import', name: 'IdxImport', component: () => import('@/views/idx/StudentImport.vue'), meta: { title: '学生导入', requiresAuth: true, permission: 'R-SY-ADMIN', module: 'idx', icon: 'Upload', keepAlive: false } },
       // SYS 系统管理
-      { path: 'sys/user', name: 'SysUser', component: () => import('@/views/sys/UserManage.vue'), meta: { title: '用户管理', requiresAuth: true } },
-      { path: 'sys/org', name: 'SysOrg', component: () => import('@/views/sys/OrgManage.vue'), meta: { title: '组织管理', requiresAuth: true } },
-      { path: 'sys/job', name: 'SysJob', component: () => import('@/views/sys/JobMonitor.vue'), meta: { title: '任务监控', requiresAuth: true } },
+      { path: 'sys/user', name: 'SysUser', component: () => import('@/views/sys/UserManage.vue'), meta: { title: '用户管理', requiresAuth: true, permission: 'R-SY-ADMIN', module: 'sys', icon: 'UserFilled', keepAlive: true } },
+      { path: 'sys/org', name: 'SysOrg', component: () => import('@/views/sys/OrgManage.vue'), meta: { title: '组织管理', requiresAuth: true, permission: 'R-SY-ADMIN', module: 'sys', icon: 'OfficeBuilding', keepAlive: true } },
+      { path: 'sys/job', name: 'SysJob', component: () => import('@/views/sys/JobMonitor.vue'), meta: { title: '任务监控', requiresAuth: true, permission: 'R-SY-ADMIN', module: 'sys', icon: 'Monitor', keepAlive: true } },
       {
         path: '403',
         name: 'Forbidden',
@@ -249,6 +249,7 @@ const router = createRouter({
 
 // 路由守卫：未登录 → /login，已登录 → 禁止访问 /login
 // 登录后首次加载菜单 → 拉取 → 注册动态路由 → next()
+// 增加权限校验：检查 meta.permission 与用户角色匹配（ADR §3.4.2）
 router.beforeEach(async (to, _from, next) => {
   const token = localStorage.getItem('access_token')
 
@@ -281,6 +282,17 @@ router.beforeEach(async (to, _from, next) => {
         await authStore.fetchUser()
       } catch {
         // 用户信息拉取失败不阻塞导航
+      }
+    }
+
+    // 权限校验：检查路由 meta.permission 与用户角色匹配
+    const requiredPermission = to.meta.permission
+    if (requiredPermission && requiredPermission !== '*') {
+      const userRoles = authStore.user?.roles || []
+      // 管理员拥有所有权限
+      if (!userRoles.includes(requiredPermission) && !userRoles.includes('R-SY-ADMIN')) {
+        next({ name: 'Forbidden' })
+        return
       }
     }
   }

@@ -156,7 +156,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import {
   Clock, Location, Plus, Trophy, House, User, DocumentChecked,
   Briefcase, Cpu, MagicStick, Loading, Check
@@ -190,6 +190,8 @@ const aiSuggestions = ref([])
 
 const radarChartRef = ref(null)
 const lineChartRef = ref(null)
+let radarChartInstance = null
+let lineChartInstance = null
 
 function generateAiEvaluation() {
   aiLoading.value = true
@@ -209,15 +211,30 @@ function saveAiEvaluation() {
   ElMessage.success('已保存综合素质评语至数据库 (cmp_ai_evaluation)！')
 }
 
+function handleResize() {
+  radarChartInstance?.resize()
+  lineChartInstance?.resize()
+}
+
 onMounted(() => {
   initRadarChart()
   initLineChart()
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  radarChartInstance?.dispose()
+  lineChartInstance?.dispose()
+  radarChartInstance = null
+  lineChartInstance = null
 })
 
 function initRadarChart() {
   if (!radarChartRef.value) return
-  const myChart = echarts.init(radarChartRef.value)
-  myChart.setOption({
+  if (radarChartInstance) radarChartInstance.dispose()
+  radarChartInstance = echarts.init(radarChartRef.value)
+  radarChartInstance.setOption({
     tooltip: {},
     radar: {
       indicator: [
@@ -261,8 +278,9 @@ function initRadarChart() {
 
 function initLineChart() {
   if (!lineChartRef.value) return
-  const myChart = echarts.init(lineChartRef.value)
-  myChart.setOption({
+  if (lineChartInstance) lineChartInstance.dispose()
+  lineChartInstance = echarts.init(lineChartRef.value)
+  lineChartInstance.setOption({
     tooltip: { trigger: 'axis' },
     legend: { textStyle: { color: '#94a3b8' } },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },

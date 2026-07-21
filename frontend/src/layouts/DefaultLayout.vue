@@ -182,7 +182,11 @@
 
       <!-- Main Page Canvas -->
       <el-main class="sh-stitch-main">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </el-main>
     </el-container>
   </el-container>

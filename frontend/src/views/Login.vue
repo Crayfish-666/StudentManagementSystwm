@@ -33,7 +33,7 @@
           </div>
         </div>
 
-        <div class="preset-account-area">
+        <div v-if="isDev" class="preset-account-area">
           <span class="preset-label">快捷身份预设（一键填充）：</span>
           <div class="preset-chips">
             <div class="sh-chip sh-chip-navy cursor-pointer" @click="fillAccount('admin', 'admin@123')">
@@ -123,6 +123,7 @@ const menuStore = useMenuStore()
 const formRef = ref(null)
 const loading = ref(false)
 const rememberMe = ref(true)
+const isDev = import.meta.env.DEV
 
 const form = reactive({
   username: '',
@@ -141,20 +142,23 @@ function fillAccount(u, p) {
 
 async function handleLogin() {
   if (!formRef.value) return
-  await formRef.value.validate(async (valid) => {
-    if (!valid) return
-    loading.value = true
-    try {
-      await authStore.login(form.username, form.password)
-      ElMessage.success(`登录成功！欢迎回来，${authStore.displayName}`)
-      await menuStore.fetchMenus(router)
-      router.push('/dashboard')
-    } catch (err) {
-      ElMessage.error(err?.message || '登录失败，请检查账号密码')
-    } finally {
-      loading.value = false
-    }
-  })
+  try {
+    await formRef.value.validate()
+  } catch {
+    return // 表单校验未通过
+  }
+  if (loading.value) return // 防止重复提交
+  loading.value = true
+  try {
+    await authStore.login(form.username, form.password)
+    ElMessage.success(`登录成功！欢迎回来，${authStore.displayName}`)
+    await menuStore.fetchMenus(router)
+    router.push('/dashboard')
+  } catch (err) {
+    ElMessage.error(err?.message || '登录失败，请检查账号密码')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

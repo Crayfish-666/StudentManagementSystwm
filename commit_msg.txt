@@ -1,0 +1,20 @@
+StudentHub 500 error fix: http.js Sa-Token adaptation + BCrypt plaintext upgrade
+
+Root cause: Sa-Token returns HTTP 200 + body.code for auth failures,
+but http.js was only checking HTTP 401 status, so auth errors were
+caught by the success interceptor and just showed a toast, never
+redirecting to login.
+
+Backend fixes:
+- AuthService: add plaintext->BCrypt auto-upgrade for existing users
+- DataInitializer: wrap all seed operations in try-catch,
+  add upgradePlaintextPasswords() for old data
+- AuthService: wrap role queries in try-catch to prevent NPE
+
+Frontend fixes:
+- http.js: rewrite to handle Sa-Token body.code errors (10401/10403/1500)
+  in the success interceptor (not just HTTP status)
+- 10401 -> clear token + redirect to login
+- 10403 -> redirect to /403
+- 1500 -> error toast with request_id
+- Remove stale refresh token flow (Sa-Token is single-token model)

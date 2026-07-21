@@ -375,8 +375,8 @@ function goRanking() {
 onMounted(async () => {
   loading.value = true
   try {
-    // 先并行拉取所有数据（此时 loading=true，图表 DOM 尚未挂载）
-    const [kpiData, trendData, assocData, incidentData, distData, topData] = await Promise.all([
+    // 使用 allSettled 容错：单个 API 失败不影响其他数据展示
+    const results = await Promise.allSettled([
       cmpDashboardApi.kpi(),
       cmpDashboardApi.trends('ty_pass_rate', trendRange.value),
       cmpDashboardApi.activeAssocByCollege(),
@@ -385,20 +385,32 @@ onMounted(async () => {
       cmpScoreApi.list({ page: 1, page_size: 10 })
     ])
 
-    // 填充数据
-    Object.assign(kpi, kpiData)
-    topList.value = topData.items || []
-    topTotal.value = topData.total || 0
+    const [kpiR, trendR, assocR, incidentR, distR, topR] = results
+
+    // 填充数据（每个都判断是否成功）
+    if (kpiR.status === 'fulfilled') Object.assign(kpi, kpiR.value)
+    if (topR.status === 'fulfilled') {
+      topList.value = topR.value.items || []
+      topTotal.value = topR.value.total || 0
+    }
 
     // 切换 loading → 触发 v-else 渲染图表 DOM
     loading.value = false
     await nextTick()
 
     // DOM 已就绪，现在才渲染图表
-    renderTrend(trendData.points || [])
-    renderBar(assocData.buckets || [])
-    renderPie(incidentData.buckets || [])
-    renderDist(distData.buckets || [])
+    if (trendR.status === 'fulfilled') renderTrend(trendR.value.points || [])
+    if (assocR.status === 'fulfilled') renderBar(assocR.value.buckets || [])
+    if (incidentR.status === 'fulfilled') renderPie(incidentR.value.buckets || [])
+    if (distR.status === 'fulfilled') renderDist(distR.value.buckets || [])
+
+    // 统计失败数量，仅在全部失败时报错
+    const failedCount = results.filter(r => r.status === 'rejected').length
+    if (failedCount === results.length) {
+      ElMessage.error('加载看板数据失败')
+    } else if (failedCount > 0) {
+      ElMessage.warning(`部分数据加载失败（${failedCount}/${results.length}）`)
+    }
   } catch (e) {
     console.error('加载看板数据失败', e)
     ElMessage.error('加载看板数据失败')
