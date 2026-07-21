@@ -3,15 +3,23 @@ package com.studenthub.config;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.studenthub.modules.sys.entity.SysRole;
 import com.studenthub.modules.sys.entity.SysUser;
+import com.studenthub.modules.sys.entity.SysUserRole;
 import com.studenthub.modules.sys.mapper.SysRoleMapper;
 import com.studenthub.modules.sys.mapper.SysUserMapper;
+import com.studenthub.modules.sys.mapper.SysUserRoleMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+/**
+ * 数据初始化器。
+ * 使用 BCrypt 加密密码（cost=12，符合 ADR-005）。
+ * 同时 seed sys_user_role 关联表，确保 RBAC 数据基础完整。
+ */
 @Component
 public class DataInitializer implements CommandLineRunner {
 
@@ -19,10 +27,17 @@ public class DataInitializer implements CommandLineRunner {
 
     private final SysUserMapper sysUserMapper;
     private final SysRoleMapper sysRoleMapper;
+    private final SysUserRoleMapper sysUserRoleMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public DataInitializer(SysUserMapper sysUserMapper, SysRoleMapper sysRoleMapper) {
+    public DataInitializer(SysUserMapper sysUserMapper,
+                           SysRoleMapper sysRoleMapper,
+                           SysUserRoleMapper sysUserRoleMapper,
+                           PasswordEncoder passwordEncoder) {
         this.sysUserMapper = sysUserMapper;
         this.sysRoleMapper = sysRoleMapper;
+        this.sysUserRoleMapper = sysUserRoleMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -31,6 +46,7 @@ public class DataInitializer implements CommandLineRunner {
         seedAdminUser();
         seedCounselorUser();
         seed20StudentUsers();
+        seedUserRoles();
     }
 
     private void seedRoles() {
@@ -67,7 +83,7 @@ public class DataInitializer implements CommandLineRunner {
         if (count == 0) {
             SysUser admin = new SysUser();
             admin.setUsername("admin");
-            admin.setPasswordHash("admin@123");
+            admin.setPasswordHash(passwordEncoder.encode("admin@123"));
             admin.setDisplayName("系统管理员");
             admin.setUserType("admin");
             admin.setStatus("active");
@@ -83,7 +99,7 @@ public class DataInitializer implements CommandLineRunner {
         if (count == 0) {
             SysUser counselor = new SysUser();
             counselor.setUsername("counselor");
-            counselor.setPasswordHash("counselor@123");
+            counselor.setPasswordHash(passwordEncoder.encode("counselor@123"));
             counselor.setDisplayName("张辅导员");
             counselor.setUserType("counselor");
             counselor.setStatus("active");
@@ -108,7 +124,7 @@ public class DataInitializer implements CommandLineRunner {
             if (count == 0) {
                 SysUser user = new SysUser();
                 user.setUsername(studentNo);
-                user.setPasswordHash("student@123");
+                user.setPasswordHash(passwordEncoder.encode("student@123"));
                 user.setDisplayName(studentNames[i]);
                 user.setUserType("student");
                 user.setStudentId(2023010100L + i + 1);
@@ -120,5 +136,39 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
         log.info("Successfully verified and seeded 20 student accounts!");
+    }
+
+    /**
+     * Seed 用户-角色关联表（RBAC 数据基础）。
+     * admin -> R-SY-ADMIN, counselor -> R-COL-COUN, students -> R-STU-NORM
+     */
+    private void seedUserRoles() {
+        assignRole("admin", "R-SY-ADMIN");
+        assignRole("counselor", "R-COL-COUN");
+        for (int i = 1; i <= 20; i++) {
+            String studentNo = String.format("20230101%02d", i);
+            assignRole(studentNo, "R-STU-NORM");
+        }
+        log.info("Successfully seeded user-role associations!");
+    }
+
+    private void assignRole(String username, String roleCode) {
+        SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, username));
+        SysRole role = sysRoleMapper.selectOne(new LambdaQueryWrapper<SysRole>().eq(SysRole::getCode, roleCode));
+        if (user == null || role == null) {
+            log.warn("Cannot assign role: user={} or role={} not found", username, roleCode);
+            return;
+        }
+        Long count = sysUserRoleMapper.selectCount(
+                new LambdaQueryWrapper<SysUserRole>()
+                        .eq(SysUserRole::getUserId, user.getId())
+                        .eq(SysUserRole::getRoleId, role.getId()));
+        if (count == 0) {
+            SysUserRole ur = new SysUserRole();
+            ur.setUserId(user.getId());
+            ur.setRoleId(role.getId());
+            ur.setCreatedAt(LocalDateTime.now());
+            sysUserRoleMapper.insert(ur);
+        }
     }
 }

@@ -6,6 +6,8 @@ import com.studenthub.modules.auth.dto.LoginRequest;
 import com.studenthub.modules.auth.dto.LoginResponse;
 import com.studenthub.modules.sys.entity.SysUser;
 import com.studenthub.modules.sys.mapper.SysUserMapper;
+import com.studenthub.modules.sys.mapper.SysUserRoleMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,9 +17,15 @@ import java.util.List;
 public class AuthService {
 
     private final SysUserMapper sysUserMapper;
+    private final SysUserRoleMapper sysUserRoleMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(SysUserMapper sysUserMapper) {
+    public AuthService(SysUserMapper sysUserMapper,
+                       SysUserRoleMapper sysUserRoleMapper,
+                       PasswordEncoder passwordEncoder) {
         this.sysUserMapper = sysUserMapper;
+        this.sysUserRoleMapper = sysUserRoleMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -30,8 +38,7 @@ public class AuthService {
             throw new IllegalArgumentException("用户名或密码错误");
         }
 
-        boolean passwordMatches = checkPassword(request.getPassword(), user.getPasswordHash());
-        if (!passwordMatches) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("用户名或密码错误");
         }
 
@@ -43,7 +50,7 @@ public class AuthService {
         user.setLastLoginAt(LocalDateTime.now());
         sysUserMapper.updateById(user);
 
-        List<String> roles = StpUtil.getRoleList(user.getId());
+        List<String> roles = sysUserRoleMapper.selectRoleCodesByUserId(user.getId());
 
         return new LoginResponse(
                 StpUtil.getTokenValue(),
@@ -57,16 +64,34 @@ public class AuthService {
         );
     }
 
-    private boolean checkPassword(String rawPassword, String storedHash) {
-        if (storedHash == null) return false;
-        if (storedHash.equals(rawPassword)) return true;
-        if ("admin".equals(rawPassword) || "admin@123".equals(rawPassword) || "student@123".equals(rawPassword)) return true;
-        return storedHash.contains(rawPassword);
-    }
-
     public void logout() {
         if (StpUtil.isLogin()) {
             StpUtil.logout();
         }
+    }
+
+    /**
+     * 获取当前登录用户信息（供 /auth/me 端点使用）。
+     */
+    public LoginResponse getCurrentUser() {
+        if (!StpUtil.isLogin()) {
+            throw new IllegalArgumentException("未登录");
+        }
+        Long userId = StpUtil.getLoginIdAsLong();
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+        List<String> roles = sysUserRoleMapper.selectRoleCodesByUserId(user.getId());
+        return new LoginResponse(
+                StpUtil.getTokenValue(),
+                StpUtil.getTokenName(),
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getUserType(),
+                user.getStudentId(),
+                roles
+        );
     }
 }

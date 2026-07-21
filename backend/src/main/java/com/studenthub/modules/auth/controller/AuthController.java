@@ -32,4 +32,12 @@ public class AuthController {
     public R<Boolean> checkLogin() {
         return R.ok(StpUtil.isLogin());
     }
+
+    /**
+     * 获取当前登录用户信息（前端 fetchUser 调用）。
+     */
+    @GetMapping("/me")
+    public R<LoginResponse> me() {
+        return R.ok(authService.getCurrentUser());
+    }
 }

@@ -1,5 +1,5 @@
 server:
-  port: 8088
+  port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api/v1
 
@@ -32,19 +32,30 @@ mybatis-plus:
 
 sa-token:
   token-name: Authorization
-  timeout: 2592000 # 30 天
+  token-prefix: Bearer
+  timeout: 86400 # 1 天（生产环境应通过 refresh 机制续期）
   active-timeout: 1800 # 30 分钟无操作自动挂起
   is-concurrent: true
-  is-share: true
-  token-style: uuid
-  is-log: true
+  is-share: false
+  token-style: random-64
+  is-log: false
 
 minio:
   endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-  access-key: ${MINIO_ACCESS_KEY:minioadmin}
-  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  access-key: ${MINIO_ACCESS_KEY:}
+  secret-key: ${MINIO_SECRET_KEY:}
   bucket-name: studenthub-bucket
+
+# Spring Boot Actuator 健康检查端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
 
 studenthub:
   security:
-    aes-key: "StudentHubDevSecretKey2026AES256"
+    aes-key: ${APP_DATA_KEY:StudentHubDevSecretKey2026AES256}

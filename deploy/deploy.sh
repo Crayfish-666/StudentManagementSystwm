@@ -12,7 +12,7 @@
 # 可选环境变量:
 #   DEPLOY_ENV         dev | production (默认 dev, 影响镜像 tag 后缀)
 #   DEPLOY_PATH        项目部署目录 (默认 /opt/studenthub)
-#   HEALTH_CHECK_URL   健康检查 URL (默认 http://127.0.0.1:8080/api/v1/healthz)
+#   HEALTH_CHECK_URL   健康检查 URL (默认 http://127.0.0.1:8080/api/v1/actuator/health)
 #   HEALTH_TIMEOUT     健康检查超时秒数 (默认 90)
 # =============================================================================
 
@@ -26,7 +26,7 @@ set -e
 
 DEPLOY_ENV="${DEPLOY_ENV:-dev}"
 DEPLOY_PATH="${DEPLOY_PATH:-/opt/studenthub}"
-HEALTH_CHECK_URL="${HEALTH_CHECK_URL:-http://127.0.0.1:8080/api/v1/healthz}"
+HEALTH_CHECK_URL="${HEALTH_CHECK_URL:-http://127.0.0.1:8080/api/v1/actuator/health}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-90}"
 IMAGE_NAME="${IMAGE_NAME:-studenthub}"
 FULL_IMAGE="${REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG}"

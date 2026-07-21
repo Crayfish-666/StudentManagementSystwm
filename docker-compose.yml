@@ -1,13 +1,13 @@
 # =============================================================================
-# StudentHub · Docker Compose 编排
+# StudentHub · Docker Compose 编排 (Java Spring Boot 版)
 # -----------------------------------------------------------------------------
 # 架构: 单容器一体化部署
-#   - 后端 Go (Gin) 监听 8080, 同时服务 /api/v1 与前端静态资源
-#   - 前端 Vue3 产物在构建阶段打入镜像, Gin NoRoute 回退到 index.html
+#   - 后端 Spring Boot 监听 8080, context-path=/api/v1
+#   - 前端 Vue3 产物在构建阶段打入镜像
 #   - SQLite + 上传文件 + 日志 通过命名卷持久化
 # -----------------------------------------------------------------------------
 # 部署到云服务器:
-#   1. 复制 deploy/.env.example 为 deploy/.env, 填入真实 JWT_SECRET / CRYPTOX_KEY
+#   1. 复制 deploy/.env.example 为 deploy/.env, 填入真实 APP_DATA_KEY 等
 #   2. docker compose build
 #   3. docker compose up -d
 #   4. docker compose logs -f   # 跟踪日志
@@ -24,20 +24,27 @@ services:
     container_name: studenthub
 
     # 从 .env 加载环境变量 (敏感配置)
-    # 注意: .env 中已设置 APP_ENV / JWT_SECRET / CRYPTOX_KEY / TZ
     env_file:
       - deploy/.env
 
     # 显式声明运行时环境变量 (覆盖 .env 或提供默认)
     environment:
-      # 运行模式: prod / dev, 容器内启动脚本会基于此值校验 JWT_SECRET
+      # 运行模式: prod / dev
       APP_ENV: ${APP_ENV:-prod}
+      # Spring Profile (prod 时激活 application-prod.yml, 如存在)
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       # 时区
       TZ: ${TZ:-Asia/Shanghai}
+      # JVM 调优参数
+      JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx1024m}
+      # AES 字段级加密密钥 (32 字节, 生产必填)
+      APP_DATA_KEY: ${APP_DATA_KEY:-}
+      # CORS 白名单 (逗号分隔)
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
 
     # 端口映射
     #   - 主机侧端口由 HOST_PORT 控制 (云服务器防火墙需放行)
-    #   - 容器内固定 8080 (与 Gin 监听端口一致)
+    #   - 容器内固定 8080 (Spring Boot 监听端口)
     #   - 默认 80 端口，方便直接通过 http://IP 访问
     ports:
       - "${HOST_PORT:-80}:8080"
@@ -54,17 +61,13 @@ services:
     # 重启策略: 总是自动重启 (除手动 stop)
     restart: unless-stopped
 
-    # 容器内用户由 Dockerfile 中 USER app 指令控制 (Alpine 系统用户)
-    # 注意: 不要在此覆盖 user, Alpine adduser -S 创建的 UID 通常为 100, 
-    #       覆盖为 1000:1000 会导致容器内文件权限异常
-
-    # 健康检查 (与 Dockerfile 中 HEALTHCHECK 指令一致, 双保险)
+    # 健康检查 (Spring Boot Actuator /actuator/health)
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/v1/healthz"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/v1/actuator/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 40s
 
     # 资源限制 (生产建议按需调整, 开学季并发高可调高)
     deploy:
@@ -83,7 +86,7 @@ services:
         max-size: "50m"
         max-file: "10"
 
-    # 优雅关闭 (给容器 30s 处理完请求后再 kill)
+    # 优雅关闭 (给 JVM 30s 处理完请求后再 kill)
     stop_grace_period: 30s
     stop_signal: SIGTERM
 

@@ -212,7 +212,7 @@ sleep 10
 # =============================================================================
 log_info "[6/6] 健康检查..."
 
-HEALTH_URL="http://127.0.0.1:${HOST_PORT}/api/v1/healthz"
+HEALTH_URL="http://127.0.0.1:${HOST_PORT}/api/v1/actuator/health"
 MAX_WAIT=120
 WAITED=0
 
