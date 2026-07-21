@@ -1,15 +1,34 @@
-# Build artifacts
-/bin/
-*.exe
-*.test
-*.out
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-# DB / runtime data
-/data/
+# Database files
+data/*.db
+data/*.db-wal
+data/*.db-shm
 
-# Vendor / dependency caches
-/vendor/
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
 
-# IDE
-.idea/
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
 .vscode/
