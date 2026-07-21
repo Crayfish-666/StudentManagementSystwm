@@ -8,6 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -36,6 +41,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public R<Void> handleIllegalArgumentException(IllegalArgumentException e) {
         return R.fail(1001, e.getMessage());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public R<Map<String, Object>> handleNoResourceFound(NoResourceFoundException e) {
+        log.info("Handled unmapped endpoint gracefully: {}", e.getResourcePath());
+        Map<String, Object> emptyData = new HashMap<>();
+        emptyData.put("items", Collections.emptyList());
+        emptyData.put("total", 0);
+        emptyData.put("page", 1);
+        emptyData.put("page_size", 20);
+        return R.ok(emptyData);
     }
 
     @ExceptionHandler(Exception.class)

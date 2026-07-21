@@ -1,24 +1,24 @@
 <template>
-  <el-container class="sh-layout-container">
-    <!-- Top Glassmorphism Header -->
-    <el-header class="sh-layout-header" height="68px">
-      <!-- Left: Logo & App Title -->
+  <el-container class="sh-stitch-layout">
+    <!-- Top Google Stitch Header -->
+    <el-header class="sh-stitch-header" height="64px">
+      <!-- Left: Logo & Campus Title -->
       <div class="header-left" @click="$router.push('/dashboard')">
-        <div class="logo-icon-wrap">
-          <el-icon :size="24"><School /></el-icon>
+        <div class="logo-box">
+          <el-icon :size="22"><School /></el-icon>
         </div>
         <div class="brand-titles">
-          <span class="main-title">StudentHub</span>
+          <span class="main-title">Nexus Campus</span>
           <span class="sub-title">学生一站式自主管理系统</span>
         </div>
       </div>
 
-      <!-- Right: Actions & User Info -->
+      <!-- Right: Role Switcher & User Avatar -->
       <div class="header-right">
-        <!-- Role Switcher Dropdown -->
-        <div class="role-switcher-box">
-          <el-icon><Switch /></el-icon>
-          <el-select v-model="currentRole" placeholder="切换角色视角" size="default" style="width: 140px;">
+        <!-- Role Switcher Pill -->
+        <div class="role-switcher-pill">
+          <el-icon class="role-icon"><Switch /></el-icon>
+          <el-select v-model="currentRole" placeholder="切换角色视角" size="small" style="width: 140px;">
             <el-option label="系统管理员" value="R-SY-ADMIN" />
             <el-option label="院系辅导员" value="R-COL-COUN" />
             <el-option label="院系团委书记" value="R-COL-LEAGUE" />
@@ -28,7 +28,7 @@
         </div>
 
         <!-- Notification Bell -->
-        <div class="noti-bell-wrap" @click="$router.push('/notifications')">
+        <div class="bell-box" @click="$router.push('/notifications')">
           <el-badge :value="3" class="noti-badge">
             <el-icon :size="20"><Bell /></el-icon>
           </el-badge>
@@ -38,8 +38,8 @@
 
         <!-- User Profile Dropdown -->
         <el-dropdown trigger="click" @command="handleUserCommand">
-          <div class="user-profile-trigger">
-            <el-avatar :size="36" icon="UserFilled" class="user-avatar" />
+          <div class="user-trigger">
+            <el-avatar :size="34" icon="UserFilled" class="user-avatar" />
             <span class="user-name">{{ displayName }}</span>
             <el-icon><ArrowDown /></el-icon>
           </div>
@@ -63,11 +63,11 @@
       </div>
     </el-header>
 
-    <!-- Main Layout Body -->
-    <el-container class="sh-layout-body">
-      <!-- Left Sidebar Menu -->
-      <el-aside :width="isCollapse ? '68px' : '230px'" class="sh-layout-aside">
-        <div class="sidebar-toggle" @click="isCollapse = !isCollapse">
+    <!-- Main Container -->
+    <el-container class="sh-stitch-body">
+      <!-- Left Light Sidebar -->
+      <el-aside :width="isCollapse ? '68px' : '230px'" class="sh-stitch-aside">
+        <div class="sidebar-toggle-bar" @click="isCollapse = !isCollapse">
           <el-icon :size="16">
             <component :is="isCollapse ? 'Expand' : 'Fold'" />
           </el-icon>
@@ -78,7 +78,7 @@
           :collapse="isCollapse"
           :collapse-transition="false"
           router
-          class="sh-sidebar-menu"
+          class="sh-stitch-sidebar-menu"
         >
           <!-- 1. 工作台 -->
           <el-sub-menu index="/dashboard">
@@ -180,8 +180,8 @@
         </el-menu>
       </el-aside>
 
-      <!-- Right Content Container -->
-      <el-main class="sh-layout-main">
+      <!-- Main Page Canvas -->
+      <el-main class="sh-stitch-main">
         <router-view />
       </el-main>
     </el-container>
@@ -221,16 +221,15 @@ async function handleUserCommand(cmd) {
 </script>
 
 <style scoped>
-.sh-layout-container {
+.sh-stitch-layout {
   min-height: 100vh;
   background: var(--sh-bg-main);
 }
 
 /* Header */
-.sh-layout-header {
-  background: var(--sh-bg-header);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--sh-border-color);
+.sh-stitch-header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--sh-surface-variant);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -238,6 +237,7 @@ async function handleUserCommand(cmd) {
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .header-left {
@@ -246,26 +246,25 @@ async function handleUserCommand(cmd) {
   gap: 12px;
   cursor: pointer;
 }
-.logo-icon-wrap {
-  width: 40px;
-  height: 40px;
+.logo-box {
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
-  background: var(--sh-gradient-brand);
+  background: var(--sh-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  box-shadow: var(--sh-shadow-glow);
 }
 .brand-titles {
   display: flex;
   flex-direction: column;
 }
 .main-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: 17px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--sh-primary);
 }
 .sub-title {
   font-size: 11px;
@@ -277,92 +276,104 @@ async function handleUserCommand(cmd) {
   align-items: center;
   gap: 16px;
 }
-.role-switcher-box {
+.role-switcher-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--sh-text-secondary);
+  gap: 6px;
+  background: var(--sh-surface-low);
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--sh-surface-variant);
 }
-.noti-bell-wrap {
+.role-icon {
+  color: var(--sh-primary);
+}
+
+.bell-box {
   cursor: pointer;
-  padding: 8px;
+  padding: 6px;
   color: var(--sh-text-secondary);
   transition: color 0.2s;
 }
-.noti-bell-wrap:hover {
+.bell-box:hover {
   color: var(--sh-primary);
 }
+
 .divider {
   width: 1px;
-  height: 24px;
-  background: var(--sh-border-color);
+  height: 22px;
+  background: var(--sh-surface-variant);
 }
-.user-profile-trigger {
+
+.user-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
 }
 .user-avatar {
-  background: var(--sh-gradient-brand);
+  background: var(--sh-primary);
+  color: #ffffff;
 }
 .user-name {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--sh-text-primary);
 }
 
 /* Sidebar */
-.sh-layout-body {
-  height: calc(100vh - 68px);
+.sh-stitch-body {
+  height: calc(100vh - 64px);
 }
-.sh-layout-aside {
-  background: rgba(15, 23, 42, 0.6);
-  border-right: 1px solid var(--sh-border-color);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.sh-stitch-aside {
+  background: #ffffff;
+  border-right: 1px solid var(--sh-surface-variant);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
 
-.sidebar-toggle {
-  height: 40px;
+.sidebar-toggle-bar {
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--sh-text-muted);
   cursor: pointer;
-  border-bottom: 1px solid var(--sh-border-color);
+  border-bottom: 1px solid var(--sh-surface-variant);
   transition: color 0.2s;
 }
-.sidebar-toggle:hover {
+.sidebar-toggle-bar:hover {
   color: var(--sh-primary);
 }
 
-.sh-sidebar-menu {
+.sh-stitch-sidebar-menu {
   border: none;
-  background: transparent;
+  background: #ffffff;
   flex: 1;
   overflow-y: auto;
 }
 
 :deep(.el-sub-menu__title), :deep(.el-menu-item) {
   color: var(--sh-text-secondary) !important;
+  font-size: 13.5px;
   font-weight: 500;
 }
 :deep(.el-sub-menu__title:hover), :deep(.el-menu-item:hover) {
-  color: #ffffff !important;
-  background: rgba(99, 102, 241, 0.12) !important;
+  color: var(--sh-primary) !important;
+  background: var(--sh-surface-low) !important;
 }
 :deep(.el-menu-item.is-active) {
-  color: #ffffff !important;
-  background: var(--sh-gradient-brand) !important;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+  color: var(--sh-primary) !important;
+  background: var(--sh-secondary-container) !important;
+  font-weight: 700;
   border-radius: 8px;
   margin: 4px 8px;
 }
 
-/* Main */
-.sh-layout-main {
+/* Main Canvas */
+.sh-stitch-main {
+  background: var(--sh-bg-main);
   padding: 24px;
   overflow-y: auto;
 }
