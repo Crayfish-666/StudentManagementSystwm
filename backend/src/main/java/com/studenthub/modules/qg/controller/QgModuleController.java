@@ -142,6 +142,86 @@ public class QgModuleController {
         return R.ok(rows.get(0));
     }
 
+    // 工时打卡列表
+    @GetMapping("/attendances")
+    public R<Map<String, Object>> getAttendances(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int page_size,
+            @RequestParam(required = false) String status) {
+
+        StringBuilder where = new StringBuilder("WHERE a.is_deleted = 0 ");
+        List<Object> params = new ArrayList<>();
+
+        if (status != null && !status.trim().isEmpty()) {
+            where.append("AND a.status = ? ");
+            params.add(status);
+        }
+
+        String countSql = "SELECT COUNT(*) FROM qg_attendance a " + where;
+        Integer total = jdbcTemplate.queryForObject(countSql, Integer.class, params.toArray());
+        if (total == null) total = 0;
+
+        String sql = "SELECT a.id, a.position_id, p.title as position_name, p.dept_name as department, " +
+                "a.student_id, s.name as student_name, s.student_no, " +
+                "a.clock_in, a.clock_out, a.hours, a.status, a.work_content, a.created_at " +
+                "FROM qg_attendance a " +
+                "LEFT JOIN qg_position p ON a.position_id = p.id " +
+                "LEFT JOIN idx_student s ON a.student_id = s.id " +
+                where +
+                "ORDER BY a.id DESC " +
+                "LIMIT ? OFFSET ?";
+        params.add(page_size);
+        params.add((page - 1) * page_size);
+        List<Map<String, Object>> items = jdbcTemplate.queryForList(sql, params.toArray());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("items", items);
+        result.put("total", total);
+        result.put("page", page);
+        result.put("page_size", page_size);
+        return R.ok(result);
+    }
+
+    // 岗位申请列表
+    @GetMapping("/applies")
+    public R<Map<String, Object>> getApplies(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int page_size,
+            @RequestParam(required = false) String status) {
+
+        StringBuilder where = new StringBuilder("WHERE pa.is_deleted = 0 ");
+        List<Object> params = new ArrayList<>();
+
+        if (status != null && !status.trim().isEmpty()) {
+            where.append("AND pa.status = ? ");
+            params.add(status);
+        }
+
+        String countSql = "SELECT COUNT(*) FROM qg_position_apply pa " + where;
+        Integer total = jdbcTemplate.queryForObject(countSql, Integer.class, params.toArray());
+        if (total == null) total = 0;
+
+        String sql = "SELECT pa.id, pa.position_id, p.title as position_name, p.dept_name as department, " +
+                "pa.student_id, s.name as student_name, s.student_no, " +
+                "pa.status, pa.apply_reason, pa.created_at " +
+                "FROM qg_position_apply pa " +
+                "LEFT JOIN qg_position p ON pa.position_id = p.id " +
+                "LEFT JOIN idx_student s ON pa.student_id = s.id " +
+                where +
+                "ORDER BY pa.id DESC " +
+                "LIMIT ? OFFSET ?";
+        params.add(page_size);
+        params.add((page - 1) * page_size);
+        List<Map<String, Object>> items = jdbcTemplate.queryForList(sql, params.toArray());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("items", items);
+        result.put("total", total);
+        result.put("page", page);
+        result.put("page_size", page_size);
+        return R.ok(result);
+    }
+
     @GetMapping("/statistics")
     public R<Map<String, Object>> getStatistics() {
         Map<String, Object> result = new HashMap<>();

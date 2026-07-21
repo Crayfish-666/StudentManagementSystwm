@@ -90,31 +90,25 @@ public class SqModuleController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long building_id) {
 
-        StringBuilder where = new StringBuilder("WHERE i.is_deleted = 0 ");
+        StringBuilder where = new StringBuilder("WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
 
-        if (status != null && !status.trim().isEmpty()) {
-            where.append("AND i.status = ? ");
-            params.add(status);
-        }
         if (building_id != null) {
             where.append("AND i.building_id = ? ");
             params.add(building_id);
         }
 
-        String countSql = "SELECT COUNT(*) FROM sq_incident i " + where;
+        String countSql = "SELECT COUNT(*) FROM sq_inspection i " + where;
         Integer total = jdbcTemplate.queryForObject(countSql, Integer.class, params.toArray());
         if (total == null) total = 0;
 
-        String sql = "SELECT i.id, i.biz_no, i.incident_type as type, i.level, i.status, " +
-                "i.building_id, b.name as building_name, " +
-                "i.reporter_id as inspector_id, " +
-                "i.description, i.resolution, i.closed_at as resolved_at, " +
-                "i.created_at as patrol_time, i.updated_at " +
-                "FROM sq_incident i " +
+        String sql = "SELECT i.id, i.biz_no, i.building_id, b.name as building_name, " +
+                "i.room_no, i.score, i.hygiene_status, i.safety_status, " +
+                "i.inspector_name, i.remark, i.patrol_time, i.created_at " +
+                "FROM sq_inspection i " +
                 "LEFT JOIN sq_building b ON i.building_id = b.id " +
                 where +
-                "ORDER BY i.id " +
+                "ORDER BY i.id DESC " +
                 "LIMIT ? OFFSET ?";
         params.add(page_size);
         params.add((page - 1) * page_size);
@@ -156,6 +150,9 @@ public class SqModuleController {
         String buildingSql = "SELECT id, code, name, total_floors FROM sq_building WHERE is_deleted = 0 ORDER BY id";
         List<Map<String, Object>> buildings = jdbcTemplate.queryForList(buildingSql);
 
+        String roomSql = "SELECT id, building_id, room_no, floor_no, bed_count, occupied_count, status FROM sq_room WHERE is_deleted = 0";
+        List<Map<String, Object>> rooms = jdbcTemplate.queryForList(roomSql);
+
         List<Map<String, Object>> tree = new ArrayList<>();
         for (Map<String, Object> building : buildings) {
             Integer buildingId = (Integer) building.get("id");
@@ -163,11 +160,21 @@ public class SqModuleController {
             if (totalFloors == null) totalFloors = 6;
 
             List<Map<String, Object>> floors = new ArrayList<>();
-            for (int i = 1; i <= totalFloors; i++) {
+            for (int f = 1; f <= totalFloors; f++) {
                 Map<String, Object> floor = new HashMap<>();
-                floor.put("id", buildingId * 100 + i);
-                floor.put("name", i + "楼");
-                floor.put("floor_no", i);
+                floor.put("id", buildingId * 100 + f);
+                floor.put("name", f + "楼");
+                floor.put("floor_no", f);
+
+                List<Map<String, Object>> floorRooms = new ArrayList<>();
+                for (Map<String, Object> r : rooms) {
+                    Integer bId = (Integer) r.get("building_id");
+                    Integer fNo = (Integer) r.get("floor_no");
+                    if (bId != null && bId.equals(buildingId) && fNo != null && fNo.equals(f)) {
+                        floorRooms.add(r);
+                    }
+                }
+                floor.put("children", floorRooms);
                 floors.add(floor);
             }
 

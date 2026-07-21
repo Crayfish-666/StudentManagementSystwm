@@ -189,6 +189,50 @@ public class StModuleController {
         return R.ok(rows.get(0));
     }
 
+    // 招新申请/招新广场列表
+    @GetMapping("/recruit-applies")
+    public R<Map<String, Object>> getRecruitApplies(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int page_size,
+            @RequestParam(required = false) String status) {
+
+        StringBuilder where = new StringBuilder("WHERE ra.is_deleted = 0 ");
+        List<Object> params = new ArrayList<>();
+
+        if (status != null && !status.trim().isEmpty()) {
+            where.append("AND ra.status = ? ");
+            params.add(status);
+        }
+
+        String countSql = "SELECT COUNT(*) FROM st_recruit_apply ra " + where;
+        Integer total = jdbcTemplate.queryForObject(countSql, Integer.class, params.toArray());
+        if (total == null) total = 0;
+
+        String sql = "SELECT ra.id, ra.plan_id, p.title as plan_title, " +
+                "ra.assoc_id, s.name as association_name, " +
+                "ra.student_id, stu.name as student_name, stu.student_no, " +
+                "col.name as college_name, " +
+                "ra.apply_reason, ra.status, ra.interview_score, ra.created_at " +
+                "FROM st_recruit_apply ra " +
+                "LEFT JOIN st_recruit_plan p ON ra.plan_id = p.id " +
+                "LEFT JOIN st_association s ON ra.assoc_id = s.id " +
+                "LEFT JOIN idx_student stu ON ra.student_id = stu.id " +
+                "LEFT JOIN sys_college col ON stu.college_id = col.id " +
+                where +
+                "ORDER BY ra.id DESC " +
+                "LIMIT ? OFFSET ?";
+        params.add(page_size);
+        params.add((page - 1) * page_size);
+        List<Map<String, Object>> items = jdbcTemplate.queryForList(sql, params.toArray());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("items", items);
+        result.put("total", total);
+        result.put("page", page);
+        result.put("page_size", page_size);
+        return R.ok(result);
+    }
+
     @GetMapping("/statistics")
     public R<Map<String, Object>> getStatistics() {
         Map<String, Object> result = new HashMap<>();
