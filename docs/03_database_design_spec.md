@@ -5,7 +5,7 @@
 | V1.0     | 2026-06-14     | 资深 DBA         | 评审稿     |
 
 > **配套文档**：[01_PRD.md](./01_PRD.md) · [02_ADR.md](./02_ADR.md)
-> **技术栈**：Go 1.22+ · GORM v2 · SQLite3（WAL）
+> **技术栈**：Java 21 · Spring Boot 3.3.14 · MyBatis-Plus 3.5 · Flyway 10.x · SQLite3（WAL）
 > **目标**：覆盖 4 大业务模块（TY / ST / SQ / QG）+ 跨模块基础层（IDX / CMP / 通用）的完整关系型结构，输出可直接落地的 DDL、GORM 索引建议、关键业务规则到约束的映射。
 
 ---

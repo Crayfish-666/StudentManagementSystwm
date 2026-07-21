@@ -9,8 +9,8 @@
 > **协议**：HTTPS + JSON（RFC 8259）
 > **风格**：RESTful（资源 + HTTP 动词），辅以"动作 endpoint"用于状态机推进
 > **基础地址**：`https://{domain}/api/v1`
-> **后端**：Go 1.22 / Gin / GORM v2 · **前端**：Vue 3 + Pinia + Element-Plus / uni-app
-> **认证**：JWT Bearer + 5 级角色 RBAC（详见 §2.2）
+> **后端**：Java 21 / Spring Boot 3.3.14 / MyBatis-Plus · **前端**：Vue 3.5 + Pinia + Element Plus
+> **认证**：Sa-Token Bearer + 5 级角色 RBAC（详见 §2.2）
 
 ---
 
