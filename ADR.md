@@ -2,7 +2,7 @@
 
 | 文档版本 | 修订日期 | 编写者 | 技术栈 | 文档状态 |
 | :--- | :--- | :--- | :--- | :--- |
-| V2.0 (SpringBoot版) | 2026-07-22 | 首席系统架构师 | Spring Boot 3 + Vue 3 + SQLite + MyBatis-Plus + Sa-Token | 审定采纳 |
+| V2.1 (答辩强化版) | 2026-07-22 | 首席系统架构师 | Spring Boot 3 + Vue 3 + SQLite + MyBatis-Plus + Sa-Token + MinIO + Spring AI | 审定采纳 |
 
 ---
 
@@ -41,8 +41,8 @@ StudentHub 重构版本采用**模块化单体 (Modular Monolith)** 架构，结
 │  └───────────────────────────────────┬───────────────────────────────────┘  │
 │                                      ▼                                      │
 │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌──────────────────────┐   │
-│  │ SQ 社区自治│  │ QG 勤工助学│  │ CMP 综合分 │  │ Spring Event Bus     │   │
-│  │ Service    │  │ Service    │  │ Listener   │  │ (ApplicationEvent)   │   │
+│  │ MinIO File │  │ Spring AI  │  │ CMP 综合分 │  │ Spring Event Bus     │   │
+│  │ Service    │  │ LLM Client │  │ Listener   │  │ (ApplicationEvent)   │   │
 │  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘  └──────────┬───────────┘   │
 │        └───────────────┼────────────────┼───────────────────┘               │
 │                        ▼                ▼                                   │
@@ -50,13 +50,13 @@ StudentHub 重构版本采用**模块化单体 (Modular Monolith)** 架构，结
 │  │ MyBatis-Plus 3.5.x 数据访问层 (Mapper / Dynamic SQL / PageInterceptor)│  │
 │  └───────────────────────────────────┬───────────────────────────────────┘  │
 └──────────────────────────────────────┼──────────────────────────────────────┘
-                                       │ JDBC (sqlite-jdbc)
+                                       │ JDBC / S3 SDK / REST API
                                        ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  数据持久层                                                                 │
-│  SQLite 3 数据库文件 (studenthub.db)                                        │
-│  PRAGMA journal_mode = WAL; foreign_keys = ON; busy_timeout = 5000;         │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────┬──────────────────────────────────────┐
+│  SQLite 3 数据库文件                 │  MinIO 对象存储中间件                │
+│  PRAGMA journal_mode = WAL;          │  Bucket: studenthub-bucket           │
+│  foreign_keys = ON; busy_timeout=5000│  分片上传 / 预签名 URL 在线预览       │
+└──────────────────────────────────────┴──────────────────────────────────────┘
 ```
 
 ---
@@ -64,93 +64,64 @@ StudentHub 重构版本采用**模块化单体 (Modular Monolith)** 架构，结
 ## 2. 架构决策记录 (ADR)
 
 ### ADR-001：采用模块化单体 (Modular Monolith) 架构
-
-* **背景 (Context)**：
-  系统服务于高校单校区或多校区的第二课堂与学生事务管理，预估并发在高峰期（开学季/集中打卡）在 2000 QPS 左右，业务模块间存在频繁的学生主档案交互与综合素质事件汇总。
-* **决策 (Decision)**：
-  不采用微服务架构，采用 Spring Boot 3 单体架构。后端包结构严格按模块隔离：
-  `com.studenthub.modules.{auth, sys, idx, ty, st, sq, qg, cmp, noti, file}`。
-* **后果与权衡 (Consequences & Trade-offs)**：
-  * **优点**：极大地降低部署与运维复杂度，简化跨模块事务处理，单文件 SQLite 即可运行。
-  * **缺点**：模块间需通过定义良好的 Service 接口通信，禁止跨模块直接调用 Mapper 层。
+* **背景**：系统服务于高校学生事务管理，预估并发在 2000 QPS 左右，模块间频繁交互。
+* **决策**：采用 Spring Boot 3 单体架构，包结构严格按模块隔离：`com.studenthub.modules.{auth, sys, idx, ty, st, sq, qg, cmp, noti, file, ai}`。
+* **权衡**：极大地降低部署与运维复杂度，简化跨模块事务处理。
 
 ---
 
 ### ADR-002：后端技术栈选型（Java 17 + Spring Boot 3.2 + MyBatis-Plus）
-
-* **背景 (Context)**：
-  团队需要高效开发，且需具备完善的 ORM 映射、动态 SQL 分页支持以及出色的社区生态。
-* **决策 (Decision)**：
-  后端确定采用 Java 17 LTS + Spring Boot 3.2.x 框架，持久层选用 MyBatis-Plus 3.5.x。
-* **后果与权衡 (Consequences & Trade-offs)**：
-  * **优点**：MyBatis-Plus 提供强大的 CRUD 封装与分页插件，对 SQLite 的标准 SQL 支持良好；Java 17 提供了密封类、Record 等现代语法特性。
-  * **缺点**：SQLite 不支持部分复杂联表 UPDATE 语法，需在 MyBatis Mapper 中使用标准 ANSI SQL。
+* **决策**：后端采用 Java 17 LTS + Spring Boot 3.2.x 框架，持久层选用 MyBatis-Plus 3.5.x。
+* **权衡**：MyBatis-Plus 提供强大的 CRUD 封装与分页插件，对 SQLite 的标准 SQL 支持良好。
 
 ---
 
 ### ADR-003：数据库选型与 SQLite WAL 模式并发优化
-
-* **背景 (Context)**：
-  系统要求低成本轻量级部署，同时需支撑高频读取与一定程度的并发写入。
-* **决策 (Decision)**：
-  采用 SQLite 3.45+ 作为数据库引擎，应用启动时由 Flyway 初始化并强制配置以下 PRAGMA 性能参数：
-  1. `PRAGMA journal_mode = WAL;` (开启写前日志，实现并发读不阻塞写、写不阻塞读)
-  2. `PRAGMA synchronous = NORMAL;` (兼顾数据安全与磁盘 I/O 性能)
-  3. `PRAGMA foreign_keys = ON;` (启用 SQLite 强外键约束)
-  4. `PRAGMA busy_timeout = 5000;` (写锁等待超时设为 5000ms，避免 SQLITE_BUSY 报错)
-* **后果与权衡 (Consequences & Trade-offs)**：
-  * **优点**：零配置文件数据库，部署极度简单，WAL 模式大幅提升读写并发性能。
-  * **缺点**：SQLite 只支持单进程写锁定。通过连接池控制与 `busy_timeout` 可完美解决单实例并发问题。
+* **决策**：采用 SQLite 3.45+，通过 Flyway 初始化并开启 `PRAGMA journal_mode = WAL; foreign_keys = ON; busy_timeout = 5000;`。
+* **权衡**：零配置数据库，WAL 模式实现读写不相互阻塞。
 
 ---
 
 ### ADR-004：安全与鉴权体系（Sa-Token + JWT + RBAC/ABAC）
-
-* **背景 (Context)**：
-  系统存在校级、院系、教师、学生等多层级角色，且需支持同名用户在不同模块的属性隔离（ABAC）。
-* **决策 (Decision)**：
-  采用 Sa-Token 框架替代传统的 Spring Security，结合 JWT 模式实现无状态鉴权与权限卡控：
-  1. 颁发 JWT 访问令牌，Sa-Token 自动管理 Session 与权限缓存。
-  2. 结合 `@SaCheckPermission` 与自定义注解实现方法级 RBAC 拦截。
-  3. 基于 AOP 切面实现 ABAC 数据作用域过滤（如 `college_id` 院系隔离）。
-* **后果与权衡 (Consequences & Trade-offs)**：
-  * **优点**：Sa-Token 学习成本低，API 极其优雅，对多账号体系、Token 无感刷新、临时签发等支持完善。
-  * **缺点**：需要在组件中合理配置 Sa-Token 的路由拦截器。
+* **决策**：采用 Sa-Token 框架实现无状态鉴权、方法级 RBAC 拦截及 AOP 属性级数据隔离（ABAC）。
+* **权衡**：API 极其优雅，天然支持多账号体系、Token 无感刷新。
 
 ---
 
 ### ADR-005：数据库版本迁移控制（Flyway）
-
-* **背景 (Context)**：
-  随着项目迭代，数据库表结构与基础字典数据需要具备可追溯的版本管理。
-* **决策 (Decision)**：
-  集成 Flyway 自动迁移工具，SQL 迁移脚本统一存放在 `src/main/resources/db/migration/` 目录下，命名遵循 `V1.0__xxx.sql` 规范。
-* **后果与权衡 (Consequences & Trade-offs)**：
-  * **优点**：保证团队开发环境与生产环境数据库结构强一致，支持自动执行建表与种子数据灌入。
-  * **缺点**：SQLite 对 `ALTER TABLE` 支持有限，复杂的字段修改需采用建新表-导数据-重命名旧表策略。
+* **决策**：集成 Flyway 自动迁移工具，SQL 迁移脚本统一存在 `src/main/resources/db/migration/`。
+* **权衡**：保证数据库结构版本强一致。
 
 ---
 
 ### ADR-006：进程内事件解耦机制（Spring ApplicationEventPublisher）
-
-* **背景 (Context)**：
-  团员发展、社团活动、社区巡查、勤工助学产生业务变更时，需触发 CMP 综合素质量化分数的计算。若在业务层硬编码计算逻辑，会导致严重的模块耦合。
-* **决策 (Decision)**：
-  利用 Spring 框架原生的 `ApplicationEventPublisher` 发布领域事件（如 `TyApplicationApprovedEvent`, `StActivityCheckedInEvent`），CMP 模块通过 `@EventListener` 或 `@TransactionalEventListener` 异步监听并结算积分。
-* **后果与权衡 (Consequences & Trade-offs)**：
-  * **优点**：完全解耦业务模块与综合量化引擎，无需引入外部 MQ 中间件。
-  * **缺点**：事件在当前 JVM 进程内处理，需确保监听器方法内具备完善的异常捕获机制，避免影响主事务。
+* **决策**：利用 Spring `ApplicationEventPublisher` 发布领域事件，CMP 模块通过 `@EventListener` 异步结算积分。
+* **权衡**：完全解耦业务模块与量化引擎，无需引入外部 MQ。
 
 ---
 
 ### ADR-007：敏感数据存储与字段级脱敏
+* **决策**：采用 AES-256-GCM 对敏感字段（身份证/手机号/银行卡）加密落库，前端脱敏显示，导出时记录 `audit_log`。
 
-* **背景 (Context)**：
-  身份证号、手机号、银行卡号等属于高度敏感信息，需满足合规审计需求。
-* **决策 (Decision)**：
-  1. 采用 AES-256-GCM 对敏感字段加密后存储在 SQLite 的 `*_enc` 列。
-  2. 维护 `*_hash` 列（SHA-256 哈希值），专门用于支持数据库高效精确匹配去重。
-  3. 前端脱敏显示，导出敏感数据时通过 AOP 记录日志到 `audit_log`。
+---
+
+### ADR-008：文件存储中间件选型（MinIO 对象存储 + 分片上传）
+* **背景**：考核明确要求具备文件存储（MinIO）、分片上传、预签名预览与打包下载功能。
+* **决策**：集成 MinIO Java SDK 8.x，搭建 MinIO 服务：
+  1. 小文件（<10MB）直传 MinIO，大文件（>10MB）支持前端切片分片上传并由后端自动合并。
+  2. 生成基于预签名 URL (Presigned URL) 的带时效访问链接，实现图片/PDF 的安全在线预览。
+  3. 支持按 `bucket/YYYY/MM/` 分目录存储与 Zip 批量打包下载。
+* **权衡**：兼容 S3 协议，摆脱本地文件系统束缚，具备高扩展性。
+
+---
+
+### ADR-009：大模型 LLM 对接与 AI 综测初稿生成架构（Spring AI / DeepSeek API）
+* **背景**：答辩演示需要突出 AI 编程与 AI 业务落地加分项（项目 6: AI 自动生成学生综合素质测评初稿）。
+* **决策**：集成 Spring AI 框架，对接 DeepSeek / OpenAI API：
+  1. 结构化提取学生在 TY/ST/SQ/QG 的得分与事件明细。
+  2. 构造领域 Prompt，异步调用 LLM 接口生成综测评语初稿。
+  3. 辅导员可进行人工复核与覆写保存，形成“AI 初稿 + 人工覆写”双轨制闭环。
+* **权衡**：有效降低辅导员撰写评语负担，具备良好的示范加分效果。
 
 ---
 
@@ -158,12 +129,14 @@ StudentHub 重构版本采用**模块化单体 (Modular Monolith)** 架构，结
 
 | 层次 | 技术选型 | 版本号 | 选型理由 |
 | :--- | :--- | :--- | :--- |
-| **JDK** | OpenJDK / Amazon Corretto | 17 LTS | 现代 Java 基础，性能优秀 |
+| **JDK** | OpenJDK | 17 LTS | 现代 Java 基础，性能优秀 |
 | **框架** | Spring Boot | 3.2.5 | 拥抱最新 Spring 6 生态 |
 | **ORM** | MyBatis-Plus | 3.5.6 | 动态 SQL、高效 CRUD 与分页 |
 | **鉴权** | Sa-Token | 1.37.0 | 轻量高效，天然支持多账号体系 |
 | **数据库** | SQLite3 / sqlite-jdbc | 3.45.3.0 | 单文件存储、WAL 高并发模式 |
 | **迁移** | Flyway Core | 10.x | 数据库 Schema 版本强一致控制 |
+| **对象存储** | MinIO Java SDK | 8.5.x | S3 兼容对象存储，支持分片与预览 |
+| **AI 框架** | Spring AI / DeepSeek API | 1.0.0-M1 | 标准大模型对接组件 |
 | **前端** | Vue | 3.5.x | Composition API 响应式支持 |
 | **构建工具** | Vite | 5.x | 极速热重载与打包编译 |
 | **UI 库** | Element Plus | 2.8.x | 丰富的企业级后台组件库 |
