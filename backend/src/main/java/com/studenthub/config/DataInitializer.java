@@ -30,6 +30,7 @@ public class DataInitializer implements CommandLineRunner {
         seedRoles();
         seedAdminUser();
         seedCounselorUser();
+        seed20StudentUsers();
     }
 
     private void seedRoles() {
@@ -57,7 +58,6 @@ public class DataInitializer implements CommandLineRunner {
                 role.setUpdatedAt(LocalDateTime.now());
                 role.setIsDeleted(0);
                 sysRoleMapper.insert(role);
-                log.info("Seeded role: {}", r[0]);
             }
         }
     }
@@ -75,7 +75,6 @@ public class DataInitializer implements CommandLineRunner {
             admin.setUpdatedAt(LocalDateTime.now());
             admin.setIsDeleted(0);
             sysUserMapper.insert(admin);
-            log.info("Seeded admin user (admin / admin@123)");
         }
     }
 
@@ -92,7 +91,34 @@ public class DataInitializer implements CommandLineRunner {
             counselor.setUpdatedAt(LocalDateTime.now());
             counselor.setIsDeleted(0);
             sysUserMapper.insert(counselor);
-            log.info("Seeded counselor user (counselor / counselor@123)");
         }
+    }
+
+    private void seed20StudentUsers() {
+        String[] studentNames = {
+                "张伟", "王芳", "李娜", "刘洋", "陈杰",
+                "杨光", "黄磊", "周敏", "吴强", "徐霞",
+                "孙浩", "胡婷", "朱勇", "高丽", "林涛",
+                "何静", "郭平", "马明", "罗军", "梁晨"
+        };
+
+        for (int i = 0; i < studentNames.length; i++) {
+            String studentNo = String.format("20230101%02d", i + 1);
+            Long count = sysUserMapper.selectCount(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, studentNo));
+            if (count == 0) {
+                SysUser user = new SysUser();
+                user.setUsername(studentNo);
+                user.setPasswordHash("student@123");
+                user.setDisplayName(studentNames[i]);
+                user.setUserType("student");
+                user.setStudentId(2023010100L + i + 1);
+                user.setStatus("active");
+                user.setCreatedAt(LocalDateTime.now());
+                user.setUpdatedAt(LocalDateTime.now());
+                user.setIsDeleted(0);
+                sysUserMapper.insert(user);
+            }
+        }
+        log.info("Successfully verified and seeded 20 student accounts!");
     }
 }

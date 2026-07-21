@@ -11,30 +11,36 @@ import java.util.*;
 @RequestMapping("/idx")
 public class IdxModuleController {
 
+    private static final String[] NAMES = {
+            "张伟", "王芳", "李娜", "刘洋", "陈杰",
+            "杨光", "黄磊", "周敏", "吴强", "徐霞",
+            "孙浩", "胡婷", "朱勇", "高丽", "林涛",
+            "何静", "郭平", "马明", "罗军", "梁晨"
+    };
+
+    private static final String[] COLLEGES = {
+            "计算机学院", "经济管理学院", "艺术设计学院", "软件工程学院", "电子信息工程学院"
+    };
+
+    private static final String[] MAJORS = {
+            "软件工程", "电子商务", "环境设计", "计算机科学与技术", "通信工程"
+    };
+
     @GetMapping("/students")
     public R<Map<String, Object>> getStudents() {
         List<Map<String, Object>> items = new ArrayList<>();
-        Map<String, Object> s1 = new HashMap<>();
-        s1.put("id", 1L);
-        s1.put("student_no", "2023010101");
-        s1.put("name", "张三");
-        s1.put("gender", "男");
-        s1.put("college_name", "计算机学院");
-        s1.put("major_name", "软件工程");
-        s1.put("class_name", "软工2301班");
-        s1.put("status", "在读");
-        items.add(s1);
-
-        Map<String, Object> s2 = new HashMap<>();
-        s2.put("id", 2L);
-        s2.put("student_no", "2023010102");
-        s2.put("name", "李四");
-        s2.put("gender", "女");
-        s2.put("college_name", "经济管理学院");
-        s2.put("major_name", "电子商务");
-        s2.put("class_name", "电商2302班");
-        s2.put("status", "在读");
-        items.add(s2);
+        for (int i = 1; i <= 20; i++) {
+            Map<String, Object> s = new HashMap<>();
+            s.put("id", (long) i);
+            s.put("student_no", String.format("20230101%02d", i));
+            s.put("name", NAMES[i - 1]);
+            s.put("gender", i % 2 == 1 ? "男" : "女");
+            s.put("college_name", COLLEGES[(i - 1) % COLLEGES.length]);
+            s.put("major_name", MAJORS[(i - 1) % MAJORS.length]);
+            s.put("class_name", String.format("%s230%d班", MAJORS[(i - 1) % MAJORS.length].substring(0, 2), (i % 3) + 1));
+            s.put("status", "在读");
+            items.add(s);
+        }
         return R.ok(wrapPage(items));
     }
 
