@@ -1,30 +1,54 @@
 -- Flyway V1.1__seed_20_samples.sql
--- Seed 20 realistic sample rows for every module table into SQLite Database
+-- Seed 20 realistic sample rows for all entities into SQLite Database Tables
 
--- 1. Populate 20 Students into idx_student
-INSERT OR IGNORE INTO idx_student (id, student_no, name, gender, political_status, status) VALUES
-(1, '2023010101', '张伟', 'M', '共青团员', 'enrolled'),
-(2, '2023010102', '王芳', 'F', '共青团员', 'enrolled'),
-(3, '2023010103', '李娜', 'F', '群众', 'enrolled'),
-(4, '2023010104', '刘洋', 'M', '群众', 'enrolled'),
-(5, '2023010105', '陈杰', 'M', '中共党员', 'enrolled'),
-(6, '2023010106', '杨光', 'M', '共青团员', 'enrolled'),
-(7, '2023010107', '黄磊', 'M', '共青团员', 'enrolled'),
-(8, '2023010108', '周敏', 'F', '群众', 'enrolled'),
-(9, '2023010109', '吴强', 'M', '共青团员', 'enrolled'),
-(10, '2023010110', '徐霞', 'F', '共青团员', 'enrolled'),
-(11, '2023010111', '孙浩', 'M', '群众', 'enrolled'),
-(12, '2023010112', '胡婷', 'F', '共青团员', 'enrolled'),
-(13, '2023010113', '朱勇', 'M', '共青团员', 'enrolled'),
-(14, '2023010114', '高丽', 'F', '共青团员', 'enrolled'),
-(15, '2023010115', '林涛', 'M', '群众', 'enrolled'),
-(16, '2023010116', '何静', 'F', '共青团员', 'enrolled'),
-(17, '2023010117', '郭平', 'M', '共青团员', 'enrolled'),
-(18, '2023010118', '马明', 'M', '共青团员', 'enrolled'),
-(19, '2023010119', '罗军', 'M', '群众', 'enrolled'),
-(20, '2023010120', '梁晨', 'F', '共青团员', 'enrolled');
+-- 1. Colleges
+INSERT OR IGNORE INTO sys_college (id, code, name) VALUES
+(1, 'COL-CS', '计算机学院'),
+(2, 'COL-EM', '经济管理学院'),
+(3, 'COL-AD', '艺术设计学院'),
+(4, 'COL-SE', '软件工程学院'),
+(5, 'COL-EI', '电子信息工程学院');
 
--- 2. Populate 20 TY Applications into ty_application
+-- 2. Majors
+INSERT OR IGNORE INTO sys_major (id, college_id, code, name) VALUES
+(1, 1, 'MAJ-CS', '计算机科学与技术'),
+(2, 2, 'MAJ-EM', '电子商务'),
+(3, 3, 'MAJ-AD', '环境设计'),
+(4, 4, 'MAJ-SE', '软件工程'),
+(5, 5, 'MAJ-EI', '通信工程');
+
+-- 3. Classes
+INSERT OR IGNORE INTO idx_class (id, major_id, grade, code, name) VALUES
+(1, 1, 2023, 'CLS-CS2301', '计科2301班'),
+(2, 2, 2023, 'CLS-EM2301', '电商2301班'),
+(3, 3, 2023, 'CLS-AD2301', '环设2301班'),
+(4, 4, 2023, 'CLS-SE2301', '软工2301班'),
+(5, 5, 2023, 'CLS-EI2301', '通信2301班');
+
+-- 4. 20 Students
+INSERT OR IGNORE INTO idx_student (id, student_no, name, gender, political_status, college_id, major_id, class_id, status) VALUES
+(1, '2023010101', '张伟', 'M', '共青团员', 1, 1, 1, 'enrolled'),
+(2, '2023010102', '王芳', 'F', '共青团员', 2, 2, 2, 'enrolled'),
+(3, '2023010103', '李娜', 'F', '群众', 3, 3, 3, 'enrolled'),
+(4, '2023010104', '刘洋', 'M', '群众', 4, 4, 4, 'enrolled'),
+(5, '2023010105', '陈杰', 'M', '中共党员', 5, 5, 5, 'enrolled'),
+(6, '2023010106', '杨光', 'M', '共青团员', 1, 1, 1, 'enrolled'),
+(7, '2023010107', '黄磊', 'M', '共青团员', 2, 2, 2, 'enrolled'),
+(8, '2023010108', '周敏', 'F', '群众', 3, 3, 3, 'enrolled'),
+(9, '2023010109', '吴强', 'M', '共青团员', 4, 4, 4, 'enrolled'),
+(10, '2023010110', '徐霞', 'F', '共青团员', 5, 5, 5, 'enrolled'),
+(11, '2023010111', '孙浩', 'M', '群众', 1, 1, 1, 'enrolled'),
+(12, '2023010112', '胡婷', 'F', '共青团员', 2, 2, 2, 'enrolled'),
+(13, '2023010113', '朱勇', 'M', '共青团员', 3, 3, 3, 'enrolled'),
+(14, '2023010114', '高丽', 'F', '共青团员', 4, 4, 4, 'enrolled'),
+(15, '2023010115', '林涛', 'M', '群众', 5, 5, 5, 'enrolled'),
+(16, '2023010116', '何静', 'F', '共青团员', 1, 1, 1, 'enrolled'),
+(17, '2023010117', '郭平', 'M', '共青团员', 2, 2, 2, 'enrolled'),
+(18, '2023010118', '马明', 'M', '共青团员', 3, 3, 3, 'enrolled'),
+(19, '2023010119', '罗军', 'M', '群众', 4, 4, 4, 'enrolled'),
+(20, '2023010120', '梁晨', 'F', '共青团员', 5, 5, 5, 'enrolled');
+
+-- 5. 20 TY Applications
 INSERT OR IGNORE INTO ty_application (id, biz_no, student_id, apply_date, statement, app_status) VALUES
 (1, 'TY-2026-0001', 1, '2026-03-01', '我志愿加入中国共产主义青年团...', 'S3'),
 (2, 'TY-2026-0002', 2, '2026-03-02', '积极参加青年志愿者活动...', 'S2'),
@@ -47,7 +71,7 @@ INSERT OR IGNORE INTO ty_application (id, biz_no, student_id, apply_date, statem
 (19, 'TY-2026-0019', 19, '2026-03-19', '坚定跟党走信念...', 'S1'),
 (20, 'TY-2026-0020', 20, '2026-03-20', '勇当青年先锋...', 'S0');
 
--- 3. Populate 20 Associations into st_association
+-- 6. 20 Associations
 INSERT OR IGNORE INTO st_association (id, assoc_code, name, president_id, star_rating, status) VALUES
 (1, 'ST-01', '计算机算法与编程社', 1, 5, 'active'),
 (2, 'ST-02', '英语角交际协会', 2, 4, 'active'),
@@ -70,7 +94,7 @@ INSERT OR IGNORE INTO st_association (id, assoc_code, name, president_id, star_r
 (19, 'ST-19', '数学建模协会', 19, 5, 'active'),
 (20, 'ST-20', '大学生合唱团', 20, 5, 'active');
 
--- 4. Populate 20 Buildings into sq_building
+-- 7. 20 Buildings
 INSERT OR IGNORE INTO sq_building (id, code, name, total_floors) VALUES
 (1, 'SQ-B01', '学生公寓1号楼', 6),
 (2, 'SQ-B02', '学生公寓2号楼', 6),
@@ -93,7 +117,7 @@ INSERT OR IGNORE INTO sq_building (id, code, name, total_floors) VALUES
 (19, 'SQ-B19', '学生公寓19号楼', 6),
 (20, 'SQ-B20', '学生公寓20号楼', 6);
 
--- 5. Populate 20 Work-Study Positions into qg_position
+-- 8. 20 Work-Study Positions
 INSERT OR IGNORE INTO qg_position (id, biz_no, dept_name, title, hourly_rate_cents, max_weekly_hours, hiring_count, status) VALUES
 (1, 'QG-P01', '图书馆', '图书整理助理', 2200, 20, 10, 'S1'),
 (2, 'QG-P02', '教务处', '档案整理助理', 2200, 20, 5, 'S1'),
@@ -115,3 +139,26 @@ INSERT OR IGNORE INTO qg_position (id, biz_no, dept_name, title, hourly_rate_cen
 (18, 'QG-P18', '新媒体中心', '视频剪辑助理', 2500, 15, 4, 'S1'),
 (19, 'QG-P19', '档案馆', '史料数字化助理', 2200, 20, 5, 'S1'),
 (20, 'QG-P20', '校友会', '校友联络助理', 2200, 20, 4, 'S1');
+
+-- 9. 20 CMP Scores
+INSERT OR IGNORE INTO cmp_score (id, student_id, total_score, ty_score, st_score, sq_score, qg_score, academic_score) VALUES
+(1, 1, 98.0, 95.0, 96.0, 98.0, 90.0, 99.0),
+(2, 2, 97.0, 94.0, 95.0, 97.0, 92.0, 98.0),
+(3, 3, 95.5, 92.0, 94.0, 96.0, 88.0, 97.0),
+(4, 4, 94.0, 90.0, 93.0, 95.0, 85.0, 96.0),
+(5, 5, 93.5, 96.0, 92.0, 94.0, 91.0, 95.0),
+(6, 6, 92.0, 88.0, 91.0, 93.0, 84.0, 94.0),
+(7, 7, 91.5, 87.0, 90.0, 92.0, 86.0, 93.0),
+(8, 8, 90.0, 85.0, 89.0, 91.0, 82.0, 92.0),
+(9, 9, 89.5, 89.0, 88.0, 90.0, 87.0, 91.0),
+(10, 10, 88.0, 86.0, 87.0, 89.0, 85.0, 90.0),
+(11, 11, 87.5, 84.0, 86.0, 88.0, 83.0, 89.0),
+(12, 12, 86.0, 85.0, 85.0, 87.0, 81.0, 88.0),
+(13, 13, 85.5, 83.0, 84.0, 86.0, 80.0, 87.0),
+(14, 14, 84.0, 82.0, 83.0, 85.0, 79.0, 86.0),
+(15, 15, 83.5, 81.0, 82.0, 84.0, 78.0, 85.0),
+(16, 16, 82.0, 80.0, 81.0, 83.0, 77.0, 84.0),
+(17, 17, 81.5, 79.0, 80.0, 82.0, 76.0, 83.0),
+(18, 18, 80.0, 78.0, 79.0, 81.0, 75.0, 82.0),
+(19, 19, 79.5, 77.0, 78.0, 80.0, 74.0, 81.0),
+(20, 20, 78.0, 76.0, 77.0, 79.0, 73.0, 80.0);

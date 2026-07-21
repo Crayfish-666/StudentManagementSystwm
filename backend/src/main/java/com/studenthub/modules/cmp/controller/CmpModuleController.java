@@ -18,62 +18,37 @@ public class CmpModuleController {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    private static final String[] NAMES = {
-            "张伟", "王芳", "李娜", "刘洋", "陈杰",
-            "杨光", "黄磊", "周敏", "吴强", "徐霞",
-            "孙浩", "胡婷", "朱勇", "高丽", "林涛",
-            "何静", "郭平", "马明", "罗军", "梁晨"
-    };
-
-    private static final String[] COLLEGES = {
-            "计算机学院", "经济管理学院", "艺术设计学院", "软件工程学院", "电子信息工程学院"
-    };
-
     @GetMapping("/rankings")
     public R<Map<String, Object>> getRankings() {
-        List<Map<String, Object>> items = new ArrayList<>();
-        for (int i = 1; i <= 20; i++) {
-            Map<String, Object> r = new HashMap<>();
-            r.put("rank", i);
-            r.put("student_name", NAMES[i - 1]);
-            r.put("student_no", String.format("20230101%02d", i));
-            r.put("college_name", COLLEGES[(i - 1) % COLLEGES.length]);
-            r.put("total_score", String.format("%.2f", 98.0 - (i * 0.85)));
-            r.put("academic_score", String.format("%.2f", 95.0 - (i * 0.5)));
-            r.put("moral_score", "96.00");
-            r.put("sports_score", "90.00");
-            r.put("art_score", "88.00");
-            r.put("labor_score", "92.00");
-            items.add(r);
-        }
-        return R.ok(wrapPage(items));
+        String sql = "SELECT RANK() OVER (ORDER BY c.total_score DESC) as rank, " +
+                     "s.name as student_name, s.student_no, IFNULL(col.name, '计算机学院') as college_name, " +
+                     "c.total_score, c.academic_score, c.ty_score as moral_score, c.st_score as sports_score, " +
+                     "c.sq_score as art_score, c.qg_score as labor_score " +
+                     "FROM cmp_score c " +
+                     "LEFT JOIN idx_student s ON c.student_id = s.id " +
+                     "LEFT JOIN sys_college col ON s.college_id = col.id " +
+                     "ORDER BY c.total_score DESC";
+        List<Map<String, Object>> items = jdbcTemplate.queryForList(sql);
+        Map<String, Object> result = new HashMap<>();
+        result.put("items", items);
+        result.put("total", items.size());
+        result.put("page", 1);
+        result.put("page_size", 20);
+        return R.ok(result);
     }
 
     @GetMapping("/scores")
     public R<Map<String, Object>> getScores() {
-        List<Map<String, Object>> items = new ArrayList<>();
-        for (int i = 1; i <= 20; i++) {
-            Map<String, Object> s = new HashMap<>();
-            s.put("id", (long) i);
-            s.put("student_name", NAMES[i - 1]);
-            s.put("academic_score", 85.0 + (i % 10));
-            s.put("moral_score", 90.0 + (i % 8));
-            s.put("physical_score", 88.0 + (i % 9));
-            s.put("sports_score", 88.0 + (i % 9));
-            s.put("art_score", 85.0 + (i % 12));
-            s.put("labor_score", 92.0 + (i % 6));
-            s.put("total_score", String.format("%.2f", 88.0 + i * 0.5));
-            items.add(s);
-        }
-        return R.ok(wrapPage(items));
-    }
-
-    private Map<String, Object> wrapPage(List<Map<String, Object>> items) {
-        Map<String, Object> res = new HashMap<>();
-        res.put("items", items);
-        res.put("total", items.size());
-        res.put("page", 1);
-        res.put("page_size", 20);
-        return res;
+        String sql = "SELECT c.id, s.name as student_name, c.academic_score, c.ty_score as moral_score, " +
+                     "c.st_score as physical_score, c.st_score as sports_score, c.sq_score as art_score, " +
+                     "c.qg_score as labor_score, c.total_score " +
+                     "FROM cmp_score c LEFT JOIN idx_student s ON c.student_id = s.id";
+        List<Map<String, Object>> items = jdbcTemplate.queryForList(sql);
+        Map<String, Object> result = new HashMap<>();
+        result.put("items", items);
+        result.put("total", items.size());
+        result.put("page", 1);
+        result.put("page_size", 20);
+        return R.ok(result);
     }
 }

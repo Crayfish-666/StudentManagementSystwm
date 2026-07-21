@@ -18,47 +18,27 @@ public class IdxModuleController {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    private static final String[] NAMES = {
-            "张伟", "王芳", "李娜", "刘洋", "陈杰",
-            "杨光", "黄磊", "周敏", "吴强", "徐霞",
-            "孙浩", "胡婷", "朱勇", "高丽", "林涛",
-            "何静", "郭平", "马明", "罗军", "梁晨"
-    };
-
-    private static final String[] COLLEGES = {
-            "计算机学院", "经济管理学院", "艺术设计学院", "软件工程学院", "电子信息工程学院"
-    };
-
-    private static final String[] MAJORS = {
-            "软件工程", "电子商务", "环境设计", "计算机科学与技术", "通信工程"
-    };
-
     @GetMapping("/students")
     public R<Map<String, Object>> getStudents() {
-        List<Map<String, Object>> items = new ArrayList<>();
-        for (int i = 1; i <= 20; i++) {
-            Map<String, Object> s = new HashMap<>();
-            s.put("id", (long) i);
-            s.put("student_no", String.format("20230101%02d", i));
-            s.put("name", NAMES[i - 1]);
-            s.put("student_name", NAMES[i - 1]);
-            s.put("gender", i % 2 == 1 ? "男" : "女");
-            s.put("college_name", COLLEGES[(i - 1) % COLLEGES.length]);
-            s.put("major_name", MAJORS[(i - 1) % MAJORS.length]);
-            s.put("class_name", String.format("%s230%d班", MAJORS[(i - 1) % MAJORS.length].substring(0, 2), (i % 3) + 1));
-            s.put("status", "在读");
-            s.put("created_at", String.format("2026-03-%02d 08:00:00", (i % 25) + 1));
-            items.add(s);
-        }
-        return R.ok(wrapPage(items));
-    }
+        String countSql = "SELECT COUNT(*) FROM idx_student WHERE is_deleted = 0";
+        Integer total = jdbcTemplate.queryForObject(countSql, Integer.class);
 
-    private Map<String, Object> wrapPage(List<Map<String, Object>> items) {
-        Map<String, Object> res = new HashMap<>();
-        res.put("items", items);
-        res.put("total", items.size());
-        res.put("page", 1);
-        res.put("page_size", 20);
-        return res;
+        String sql = "SELECT s.id, s.student_no, s.name, s.name as student_name, " +
+                     "CASE WHEN s.gender = 'M' THEN '男' ELSE '女' END as gender, " +
+                     "col.name as college_name, m.name as major_name, c.name as class_name, " +
+                     "s.status, s.created_at " +
+                     "FROM idx_student s " +
+                     "LEFT JOIN sys_college col ON s.college_id = col.id " +
+                     "LEFT JOIN sys_major m ON s.major_id = m.id " +
+                     "LEFT JOIN idx_class c ON s.class_id = c.id " +
+                     "WHERE s.is_deleted = 0";
+        List<Map<String, Object>> items = jdbcTemplate.queryForList(sql);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("items", items);
+        result.put("total", total != null ? total : items.size());
+        result.put("page", 1);
+        result.put("page_size", 20);
+        return R.ok(result);
     }
 }
