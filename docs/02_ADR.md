@@ -5,7 +5,7 @@
 | V1.0     | 2026-06-14     | 首席架构师 (CTO)   | 评审稿     |
 
 > **文档目的**：作为系统架构的"宪法级"文件，记录所有关键技术选型与工程规范，所有研发、测试、运维活动须严格遵循。
-> **范围**：覆盖后端（Go + Gin + GORM + SQLite3）、前端（Vue3 + Vite + Element Plus）、工程化、CI/CD、安全合规等。
+> **范围**：覆盖后端（Java 21 + Spring Boot 3.3.14 + MyBatis-Plus + SQLite3）、前端（Vue 3.5 + Vite 5 + Element Plus）、工程化、CI/CD、安全合规等。
 > **配套文档**：[01_PRD.md](./01_PRD.md)
 
 ---
@@ -140,7 +140,7 @@ graph TB
 | 特性 | 描述 |
 | ---- | ---- |
 | 部署形态 | 单体应用（Modular Monolith），按业务模块物理分包，未来可平滑拆分 |
-| 数据存储 | SQLite3 单库文件，支持后期切换到 PostgreSQL/MySQL（通过 GORM 抽象） |
+| 数据存储 | SQLite3 单库文件，支持后期切换到 PostgreSQL/MySQL（通过 MyBatis-Plus 抽象） |
 | 通信 | 内部 in-process 事件总线；对外 RESTful JSON |
 | 前端 | SPA + 路由懒加载 + 字典驱动 |
 | 鉴权 | JWT (Access + Refresh) + RBAC + ABAC |
@@ -233,28 +233,25 @@ graph TB
 | 项 | 内容 |
 | --- | --- |
 | 状态 | `Accepted` |
-| 日期 | 2026-06-14 |
+| 日期 | 2026-07-20 |
 
-**决策**：**SQLite3**（开发与初期生产）+ **GORM v2**。
+**决策**：**SQLite3**（开启 WAL 模式、5000ms 锁等待与外键约束） + **MyBatis-Plus 3.5.7** + **Flyway 10.x**。
 
 **理由**：
-1. **单文件部署**：契合教学/校内场景的"零运维"诉求；
-2. **ACID + 事务**：完全满足本系统的强一致性需求；
-3. **GORM 抽象**：未来切换到 PostgreSQL/MySQL 仅需更换 driver；
-4. **WAL 模式**：并发读写性能可控。
+1. **单文件零运维**：契合教学/校内场景的"极简部署"诉求；
+2. **ACID + WAL 写前日志**：并发读写性能优异，满足强一致性需求；
+3. **MyBatis-Plus & Spring JDBC 抽象**：未来切换到 PostgreSQL/MySQL 极简平滑；
+4. **Flyway 自动化迁移**：使用 Flyway `V1.0` ~ `V1.4` 版本化脚本管控数据库 Schema 与种子数据。
 
 **备选方案**：
 | 方案 | 优势 | 劣势 | 结论 |
 | ---- | ---- | ---- | ---- |
 | PostgreSQL | 强大事务与扩展 | 需独立部署 | 备选（规模化后切换） |
 | MySQL | 生态成熟 | 配置成本高 | 备选 |
-| LevelDB / BoltDB | 嵌入 KV | 关系能力弱 | 弃 |
 
 **影响**：
-- 必须使用 GORM 而非裸 SQL，便于方言切换；
-- 启动时开启 WAL：`PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;`
-- 数据库文件纳入备份策略，保留 ≥ 30 天；
-- 禁止使用 SQLite 不支持的特性（如 `FOR UPDATE SKIP LOCKED` 的等价语法需用事务隔离替代）。
+- 使用 MyBatis-Plus Wrapper / JdbcTemplate，不写硬编码跨库函数；
+- 启动时配置 WAL 模式：`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;`
 
 ---
 
@@ -263,28 +260,14 @@ graph TB
 | 项 | 内容 |
 | --- | --- |
 | 状态 | `Accepted` |
-| 日期 | 2026-06-14 |
+| 日期 | 2026-07-20 |
 
-**决策**：**Modular Monolith（模块化单体）** + **in-process 事件总线**。
+**决策**：**Modular Monolith（模块化单体）**。
 
 **理由**：
-1. 4 大模块共享同一"学生主体"，强耦合业务（综合素质量化、过程档案）天然适合单体；
-2. 模块边界由 **Go package + 目录结构** 强制约束；
-3. in-process 事件总线降低复杂度，未来可平滑替换为 NATS/Kafka；
-4. 单体部署、单库，避免分布式事务、跨库 JOIN 难题。
-
-**备选方案**：
-| 方案 | 优势 | 劣势 | 结论 |
-| ---- | ---- | ---- | ---- |
-| 微服务 | 独立伸缩 | 分布式事务、运维成本 | 不适合当前阶段 |
-| Serverless | 按量计费 | 冷启动、状态管理复杂 | 不适合 |
-
-**影响**：
-- 模块之间**只能**通过：
-  - 公开服务接口（pkg/module/X）
-  - 领域事件
-  禁止直接访问其他模块的内部表/结构体。
-- 出现"跨模块事务"时，优先使用 **Saga 编排式事务**（事件补偿），禁止跨模块的"大事务"。
+1. 五大模块共享同一"学生主体"，强耦合业务天然适合单体；
+2. 模块边界由 **Java package + 目录结构** 强制约束（`com.studenthub.modules.{module}`）；
+3. 单体部署、单库，避免分布式事务、跨库 JOIN 难题。
 
 ---
 
@@ -293,40 +276,14 @@ graph TB
 | 项 | 内容 |
 | --- | --- |
 | 状态 | `Accepted` |
-| 日期 | 2026-06-14 |
+| 日期 | 2026-07-20 |
 
-**决策**：**JWT (HS256)** + **Access Token (15min) + Refresh Token (7d, HttpOnly Cookie)**。
+**决策**：**Sa-Token 1.37+ (JWT 模式)** + **Header `Authorization: Bearer {token}`**。
 
 **理由**：
-1. 校园场景无强 SSO 需求（如对接 CAS），但预留接口；
-2. 双 Token 兼顾安全与体验；
-3. Refresh Token 存于 HttpOnly + SameSite=Strict Cookie，XSS 风险低。
-
-**Token Claims (示例)**：
-```json
-{
-  "sub": "20231001",
-  "uid": 1024,
-  "name": "张三",
-  "roles": ["R-STU-NORM", "R-STU-LEAGUE"],
-  "orgs": [{"type": "class", "id": "CS2301"}, {"type": "dorm", "id": "B-3-201"}],
-  "iat": 1718332800,
-  "exp": 1718333700,
-  "iss": "studenthub",
-  "jti": "uuid-v7"
-}
-```
-
-**影响**：
-- 登录密码使用 **bcrypt cost=12**；
-- 强制 HTTPS（生产环境）；
-- Refresh Token 须支持 **轮换** 与 **黑名单**（Redis/内存 LRU，初期可使用进程内 LRU）。
-
-**决策细化（2026-06-23 落地版）**：
-- Refresh Token 黑名单采用 **进程内 LRU**（`hashicorp/golang-lru/v2`），key = `jti`，value = 过期时间；
-- 配合 `sys_user.token_version`（INT）做"整人作废"：改密、禁用账号、强制下线时 `token_version + 1`；
-- 校验链路：`ParseAccess` / `ParseRefresh` 后，**必须** 同时满足 `token_version == user.token_version` 且 `jti` 不在黑名单内；任一不满足返回 `40103 RT_REVOKED`；
-- 服务重启后黑名单清空，但 7d TTL 与 token_version 自增保证安全窗口可控。
+1. Sa-Token 轻量开箱即用，天然支持 Spring Boot 3 & JWT 校验；
+2. 兼顾安全与体验，支持 Token 自动挂起与透明刷新；
+3. 支持动态角色绑定（`R-SY-ADMIN`, `R-IDX-COUNSELOR`, `R-STUDENT` 等）。
 
 ---
 
@@ -335,38 +292,14 @@ graph TB
 | 项 | 内容 |
 | --- | --- |
 | 状态 | `Accepted` |
-| 日期 | 2026-06-14 |
+| 日期 | 2026-07-20 |
 
-**决策**：**RBAC（角色）+ ABAC（属性）混合**。
+**决策**：**RBAC（角色）+ Vue Router / Sa-Token Guard 守卫**。
 
 **模型**：
-- **角色 (Role)**：参见 PRD §2.1，含校级、院系级、学生级；
-- **资源 (Resource)**：每个业务实体（社团、活动、岗位…）；
-- **动作 (Action)**：`create / read / update / delete / approve / reject / export`；
-- **属性 (Attribute)**：用户所属院系/支部/楼栋/时间窗/IP/设备指纹等。
-
-**策略表达**（伪代码）：
-```
-can(user, "approve", activity) :-
-  user.role ∈ {R-COL-ADMIN, R-COL-TUTOR, R-SY-ADMIN}
-  AND
-  if user.role == R-COL-ADMIN: activity.collegeId == user.collegeId
-  if user.role == R-COL-TUTOR: activity.tutorId == user.uid
-  if user.role == R-SY-ADMIN:   true
-  AND
-  activity.level in approvalScope(user.role)
-  AND
-  now() in workingHours(user.role) OR user.role == R-SY-ADMIN
-```
-
-**实现**：
-- 使用 **Casbin (gorm-adapter)** 作为策略引擎；
-- 策略文件 `internal/accessx/policies/*.csv`；
-- 在 Gin 中间件层做"零业务侵入"校验。
-
-**影响**：
-- 任何新增 API 必须登记 `Resource × Action × Role` 矩阵；
-- ABAC 规则须有单测覆盖边界（跨院系、越权读等）。
+- **角色 (Role)**：系统管理员（`R-SY-ADMIN`）、院系辅导员（`R-IDX-COUNSELOR`）、普通学生；
+- **前端路由守卫**：`beforeEach` 匹配路由 `meta.permission`，未授权重定向至 `/403` 页面；
+- **后端 API 校验**：基于 Sa-Token 注解或 Filter 进行权限卡控。
 
 ---
 
@@ -508,7 +441,7 @@ CREATE INDEX idx_event_module    ON event_log(module, occurred_at);
 - 分页：`?page=1&page_size=20`，响应体 `data.list` + `data.total`；
 - 排序：`?sort=created_at:desc,id:asc`；
 - 过滤：与 `q[field]=value` 风格，复杂过滤使用 `POST /search`；
-- 文件上传：`multipart/form-data` + 预签名 URL 模式（见 ADR-014）；
+- 文件上传：`multipart/form-data` + 预签名 URL 模式；
 - 时区：所有时间字段后端以 **RFC3339 + +08:00** 序列化。
 
 **影响**：
@@ -548,7 +481,7 @@ CREATE INDEX idx_event_module    ON event_log(module, occurred_at);
 
 **决策**：双层审计：
 1. **应用审计**（业务事件，存于 `event_log`，见 ADR-008）；
-2. **访问审计**（API 调用，存于 `audit_log`，由 Gin 中间件统一写入）。
+2. **访问审计**（API 调用，存于 `audit_log`，由 Filter 统一写入）。
 
 **访问审计字段**：
 ```sql
@@ -569,7 +502,7 @@ CREATE TABLE audit_log (
 ```
 
 **影响**：
-- 任何修改 S0→S1、S2→S3、S3→S4 的 API 必须经过 `audit.Middleware`；
+- 任何修改 S0→S1、S2→S3、S3→S4 的 API 必须经过审计拦截；
 - 审计保留期 ≥ 5 年。
 
 ---
@@ -593,9 +526,9 @@ CREATE TABLE biz_seq (
     PRIMARY KEY (module, year)
 );
 ```
-- 取号函数 `NextBizNo(ctx, module) string`：
+- 取号逻辑：
   - `BEGIN; UPDATE biz_seq SET cur=cur+1 WHERE module=? AND year=? RETURNING cur; COMMIT;`
-  - 返回 `fmt.Sprintf("%s-%d-%04d", module, year, cur)`。
+  - 返回 formatted string。
 
 **影响**：
 - 流水号 4 位（年内最大 9999）足以满足校内场景；
@@ -894,7 +827,7 @@ studenthub/
 | `develop` | 集成 | - |
 | `feature/*` | 特性 | `feature/ty-2026-submit` |
 | `fix/*` | 缺陷 | `fix/qg-payroll-decimal` |
-| `chore/*` | 杂项 | `chore/dep-bump-gorm` |
+| `chore/*` | 杂项 | `chore/dep-bump-mybatis` |
 | `release/*` | 发布准备 | `release/v1.2.0` |
 | `hotfix/*` | 生产热修 | `hotfix/login-401-loop` |
 
@@ -1136,7 +1069,7 @@ is_deleted  INTEGER NOT NULL DEFAULT 0   -- 软删
 
 | 项 | 措施 |
 | --- | --- |
-| 注入 | GORM 参数化 + 输入校验（`go-playground/validator/v10`） |
+| 注入 | MyBatis-Plus 参数化 + Spring Validation |
 | XSS | 前端 Vue 默认转义 + 禁用 `v-html`（白名单场景需审计） |
 | CSRF | SameSite Cookie + 双 Token |
 | 越权 | RBAC + ABAC 中间件；资源 ID 须校验归属 |
@@ -1176,7 +1109,7 @@ is_deleted  INTEGER NOT NULL DEFAULT 0   -- 软删
 modules/ty/
 ├── api/             # handler / DTO / 路由注册
 ├── service/         # 业务编排，状态机入口
-├── repository/      # GORM 数据访问
+├── mapper/          # MyBatis-Plus 数据访问
 ├── model/           # 实体 & 数据库映射
 ├── event/           # 事件定义 & 订阅
 ├── statemachine/    # 本模块状态机配置
@@ -1288,24 +1221,17 @@ server {
 
 ## 7. 附录
 
-### 7.1 推荐库（Go）
-| 库 | 用途 |
+### 7.1 推荐依赖（Java / Spring Boot 3）
+| 依赖 / Artifact | 用途 |
 | --- | --- |
-| `github.com/gin-gonic/gin` | HTTP 框架 |
-| `gorm.io/gorm` + `gorm.io/driver/sqlite` | ORM |
-| `github.com/golang-jwt/jwt/v5` | JWT |
-| `github.com/casbin/casbin` + `gorm-adapter` | 权限 |
-| `github.com/go-playground/validator/v10` | 校验 |
-| `github.com/robfig/cron/v3` | 调度 |
-| `github.com/pressly/goose/v3` | 迁移 |
-| `github.com/spf13/viper` | 配置 |
-| `go.uber.org/zap` | 日志 |
-| `github.com/swaggo/swag` | OpenAPI |
-| `github.com/google/uuid` | UUID v7 |
-| `github.com/stretchr/testify` | 测试 |
-| `golang.org/x/crypto/bcrypt` | 密码 |
-| `github.com/hashicorp/golang-lru/v2` | LRU |
-| `github.com/sony/gobreaker` | 熔断（外部通道） |
+| `org.springframework.boot:spring-boot-starter-web` | Spring Boot 3 Web 基础框架 |
+| `com.baomidou:mybatis-plus-boot-starter:3.5.7` | MyBatis-Plus ORM 框架 |
+| `cn.dev33:sa-token-spring-boot3-starter:1.37+` | Sa-Token 轻量级鉴权组件 |
+| `org.flywaydb:flyway-core:10.x` | Flyway 自动化 Schema / DML 迁移 |
+| `org.xerial:sqlite-jdbc` | SQLite3 驱动（支持 WAL 模式） |
+| `io.minio:minio:8.5.x` | MinIO Java SDK（S3 协议分片上传） |
+| `org.springframework.ai:spring-ai-openai-starter` | Spring AI 与 DeepSeek API 深度集成 |
+| `org.springframework.boot:spring-boot-starter-test` | JUnit 5 与 Spring Test 集成测试套件 |
 
 ### 7.2 推荐库（前端）
 | 库 | 用途 |

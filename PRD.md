@@ -4,6 +4,8 @@
 | :--- | :--- | :--- | :--- | :--- |
 | V2.1 (答辩硬性考核强化版) | 2026-07-22 | 系统首席架构师 | Spring Boot 3 + Vue 3 + SQLite + MyBatis-Plus + Sa-Token + MinIO + LLM | 正式规约 |
 
+> 📌 **唯一事实来源说明 (SSOT)**：本项目的官方“宪法级”产品需求文档为位于 `docs/` 目录下的 **[`docs/01_PRD.md`](file:///d:/Developing/WorkSpace/StudentManagementSystemVD/docs/01_PRD.md)**。根目录本文件为便捷速查摘要版。
+
 ---
 
 ## 0. 文档概述与建设目标
