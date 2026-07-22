@@ -4,6 +4,7 @@ import com.studenthub.common.R;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
@@ -201,5 +202,61 @@ public class SqModuleController {
         result.put("open_incidents", openIncidents != null ? openIncidents : 0);
 
         return R.ok(result);
+    }
+    @PostMapping("/incidents")
+    public R<Map<String, Object>> createIncident(@RequestBody Map<String, Object> body) {
+        String bizNo = "SQI" + System.currentTimeMillis();
+        String sql = "INSERT INTO sq_incident (biz_no, incident_type, level, building_id, reporter_id, description, status, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, 0)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, bizNo, body.get("incident_type"), body.get("level"), body.get("building_id"), body.get("reporter_id"), body.get("description"), now, now);
+        body.put("biz_no", bizNo);
+        body.put("status", "open");
+        return R.ok(body);
+    }
+
+    @PutMapping("/incidents/{id}")
+    public R<Void> updateIncident(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE sq_incident SET status = ?, handler_id = ?, resolution = ?, closed_at = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("status"), body.get("handler_id"), body.get("resolution"), body.get("closed_at"), LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @DeleteMapping("/incidents/{id}")
+    public R<Void> deleteIncident(@PathVariable Long id) {
+        String sql = "UPDATE sq_incident SET is_deleted = 1, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/inspections")
+    public R<Map<String, Object>> createInspection(@RequestBody Map<String, Object> body) {
+        String bizNo = "SQP" + System.currentTimeMillis();
+        String sql = "INSERT INTO sq_inspection (biz_no, building_id, room_no, score, hygiene_status, safety_status, inspector_name, remark, patrol_time, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, bizNo, body.get("building_id"), body.get("room_no"), body.get("score"), body.get("hygiene_status"), body.get("safety_status"), body.get("inspector_name"), body.get("remark"), body.get("patrol_time"), now, now);
+        body.put("biz_no", bizNo);
+        return R.ok(body);
+    }
+
+    @PostMapping("/buildings")
+    public R<Map<String, Object>> createBuilding(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO sq_building (code, name, total_floors, tutor_id, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, 0)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, body.get("code"), body.get("name"), body.get("total_floors"), body.get("tutor_id"), now, now);
+        return R.ok(body);
+    }
+
+    @PutMapping("/buildings/{id}")
+    public R<Void> updateBuilding(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE sq_building SET code = ?, name = ?, total_floors = ?, tutor_id = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("code"), body.get("name"), body.get("total_floors"), body.get("tutor_id"), LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @DeleteMapping("/buildings/{id}")
+    public R<Void> deleteBuilding(@PathVariable Long id) {
+        String sql = "UPDATE sq_building SET is_deleted = 1, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
     }
 }

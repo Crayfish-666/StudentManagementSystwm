@@ -5,7 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-
+import java.time.LocalDateTime;
 /**
  * 团员发展模块 Controller
  * 支持全流程业务 API：申请、推优、培养、政审、发展大会、转正与团员花名册
@@ -398,5 +398,110 @@ public class TyModuleController {
                 (college_id != null ? "AND col.id = " + college_id + " " : "") +
                 "ORDER BY c.id";
         return R.ok(jdbcTemplate.queryForList(sql));
+    }
+
+    // 12. 创建申请
+    @PostMapping("/applications")
+    public R<Map<String, Object>> createApplication(@RequestBody Map<String, Object> body) {
+        String bizNo = String.format("TY-%d-%04d", LocalDateTime.now().getYear(), new java.util.Random().nextInt(10000));
+        String sql = "INSERT INTO ty_application (biz_no, student_id, statement, apply_date, app_status, created_at, updated_at) " +
+                     "VALUES (?, ?, ?, ?, 'S0', ?, ?)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, bizNo, body.get("student_id"), body.get("statement"), body.get("apply_date"), now, now);
+        Map<String, Object> result = new HashMap<>();
+        result.put("biz_no", bizNo);
+        return R.ok(result);
+    }
+
+    // 13. 更新申请
+    @PutMapping("/applications/{id}")
+    public R<Void> updateApplication(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE ty_application SET statement = ?, apply_date = ?, updated_at = ? WHERE id = ? AND app_status = 'S0' AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("statement"), body.get("apply_date"), LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    // 14. 删除申请
+    @DeleteMapping("/applications/{id}")
+    public R<Void> deleteApplication(@PathVariable Long id) {
+        String sql = "UPDATE ty_application SET is_deleted = 1, updated_at = ? WHERE id = ? AND app_status = 'S0' AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    // 15. 提交申请
+    @PostMapping("/applications/{id}/submit")
+    public R<Void> submitApplication(@PathVariable Long id) {
+        String sql = "UPDATE ty_application SET app_status = 'S1', updated_at = ? WHERE id = ? AND app_status = 'S0' AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    // 16. 撤回申请
+    @PostMapping("/applications/{id}/withdraw")
+    public R<Void> withdrawApplication(@PathVariable Long id) {
+        String sql = "UPDATE ty_application SET app_status = 'S0', updated_at = ? WHERE id = ? AND app_status = 'S1' AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    // 17. 审批申请
+    @PostMapping("/applications/{id}/approve")
+    public R<Void> approveApplication(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String action = (String) body.get("action");
+        String opinion = (String) body.get("opinion");
+        String level = (String) body.get("level");
+
+        String opinionField = level + "_opinion";
+        String status = "approve".equals(action) ? ("counselor".equals(level) ? "S2" : "college".equals(level) ? "S3" : "S4") : "S_REJECT";
+        
+        String sql = "UPDATE ty_application SET " + opinionField + " = ?, app_status = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, opinion, status, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    // 18. 创建培养记录
+    @PostMapping("/cultivation-records")
+    public R<Void> createCultivationRecord(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO ty_cultivation_record (application_id, student_id, evaluator_name, evaluation_content, quarter, created_at, updated_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, body.get("application_id"), body.get("student_id"), body.get("evaluator_name"), 
+                            body.get("evaluation_content"), body.get("quarter"), now, now);
+        return R.ok();
+    }
+
+    // 19. 创建政审记录
+    @PostMapping("/political-reviews")
+    public R<Void> createPoliticalReview(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO ty_political_review (application_id, development_id, target_name, target_relation, method, conclusion, created_at, updated_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, body.get("application_id"), body.get("development_id"), body.get("target_name"), 
+                            body.get("target_relation"), body.get("method"), body.get("conclusion"), now, now);
+        return R.ok();
+    }
+
+    // 20. 创建发展大会记录
+    @PostMapping("/development-meetings")
+    public R<Void> createDevelopmentMeeting(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO ty_development_meeting (development_id, biz_no, meeting_at, expected_count, actual_count, approve_count, against_count, abstain_count, decision, created_at, updated_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, body.get("development_id"), body.get("biz_no"), body.get("meeting_at"), 
+                            body.get("expected_count"), body.get("actual_count"), body.get("approve_count"), 
+                            body.get("against_count"), body.get("abstain_count"), body.get("decision"), now, now);
+        return R.ok();
+    }
+
+    // 21. 创建转正记录
+    @PostMapping("/probationary-records")
+    public R<Void> createProbationaryRecord(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO ty_probationary (student_id, biz_no, probation_start_date, probation_end_date, status, thought_report_count, created_at, updated_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, body.get("student_id"), body.get("biz_no"), body.get("probation_start_date"), 
+                            body.get("probation_end_date"), body.get("status"), body.get("thought_report_count"), now, now);
+        return R.ok();
     }
 }

@@ -4,6 +4,7 @@ import com.studenthub.common.R;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
@@ -238,5 +239,79 @@ public class QgModuleController {
         result.put("active_positions", activePositions != null ? activePositions : 0);
 
         return R.ok(result);
+    }
+    @PostMapping("/positions")
+    public R<Map<String, Object>> createPosition(@RequestBody Map<String, Object> body) {
+        String bizNo = "QGP" + System.currentTimeMillis();
+        String sql = "INSERT INTO qg_position (biz_no, title, dept_name, hourly_rate_cents, max_weekly_hours, hiring_count, status, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, 'S1', ?, ?, 0)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, bizNo, body.get("title"), body.get("dept_name"), body.get("hourly_rate_cents"), body.get("max_weekly_hours"), body.get("hiring_count"), now, now);
+        body.put("biz_no", bizNo);
+        body.put("status", "S1");
+        return R.ok(body);
+    }
+
+    @PutMapping("/positions/{id}")
+    public R<Void> updatePosition(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE qg_position SET title = ?, dept_name = ?, hourly_rate_cents = ?, max_weekly_hours = ?, hiring_count = ?, status = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("title"), body.get("dept_name"), body.get("hourly_rate_cents"), body.get("max_weekly_hours"), body.get("hiring_count"), body.get("status"), LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @DeleteMapping("/positions/{id}")
+    public R<Void> deletePosition(@PathVariable Long id) {
+        String sql = "UPDATE qg_position SET is_deleted = 1, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/difficulty-certs")
+    public R<Map<String, Object>> createDifficultyCert(@RequestBody Map<String, Object> body) {
+        String bizNo = "QGC" + System.currentTimeMillis();
+        String sql = "INSERT INTO qg_difficulty_cert (biz_no, student_id, level, academic_year, cert_status, proof_urls, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, 0)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, bizNo, body.get("student_id"), body.get("level"), body.get("academic_year"), body.get("proof_urls"), now, now);
+        body.put("biz_no", bizNo);
+        body.put("cert_status", "pending");
+        return R.ok(body);
+    }
+
+    @PutMapping("/difficulty-certs/{id}")
+    public R<Void> updateDifficultyCert(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE qg_difficulty_cert SET cert_status = ?, level = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("cert_status"), body.get("level"), LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @DeleteMapping("/difficulty-certs/{id}")
+    public R<Void> deleteDifficultyCert(@PathVariable Long id) {
+        String sql = "UPDATE qg_difficulty_cert SET is_deleted = 1, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/attendances")
+    public R<Map<String, Object>> createAttendance(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO qg_attendance (position_id, student_id, clock_in, clock_out, hours, status, work_content, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, 0)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, body.get("position_id"), body.get("student_id"), body.get("clock_in"), body.get("clock_out"), body.get("hours"), body.get("work_content"), now, now);
+        body.put("status", "pending");
+        return R.ok(body);
+    }
+
+    @PostMapping("/applies")
+    public R<Map<String, Object>> createApply(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO qg_position_apply (position_id, student_id, apply_reason, status, created_at, updated_at, is_deleted) VALUES (?, ?, ?, 'pending', ?, ?, 0)";
+        LocalDateTime now = LocalDateTime.now();
+        jdbcTemplate.update(sql, body.get("position_id"), body.get("student_id"), body.get("apply_reason"), now, now);
+        body.put("status", "pending");
+        return R.ok(body);
+    }
+
+    @PutMapping("/applies/{id}")
+    public R<Void> updateApplyStatus(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE qg_position_apply SET status = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("status"), LocalDateTime.now(), id);
+        return R.ok();
     }
 }

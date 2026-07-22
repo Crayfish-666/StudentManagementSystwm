@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/st")
@@ -250,4 +251,112 @@ public class StModuleController {
 
         return R.ok(result);
     }
+    @PostMapping("/associations")
+    public R<Void> createAssociation(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO st_association (name, assoc_code, status, star_rating, president_id, college_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, body.get("name"), body.get("assoc_code"), body.getOrDefault("status", "active"), body.get("star_rating"), body.get("president_id"), body.get("college_id"), LocalDateTime.now(), LocalDateTime.now());
+        return R.ok();
+    }
+
+    @PutMapping("/associations/{id}")
+    public R<Void> updateAssociation(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE st_association SET name = ?, status = ?, star_rating = ?, president_id = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("name"), body.get("status"), body.get("star_rating"), body.get("president_id"), LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @DeleteMapping("/associations/{id}")
+    public R<Void> deleteAssociation(@PathVariable Long id) {
+        String sql = "UPDATE st_association SET is_deleted = 1, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/activities")
+    public R<Void> createActivity(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO st_activity (biz_no, title, level, activity_status, start_time, end_time, location, budget_cents, assoc_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String bizNo = "ACT" + System.currentTimeMillis();
+        jdbcTemplate.update(sql, bizNo, body.get("title"), body.get("level"), body.getOrDefault("activity_status", "S0"), body.get("start_time"), body.get("end_time"), body.get("location"), body.get("budget_cents"), body.get("assoc_id"), LocalDateTime.now(), LocalDateTime.now());
+        return R.ok();
+    }
+
+    @PutMapping("/activities/{id}")
+    public R<Void> updateActivity(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE st_activity SET title = ?, level = ?, start_time = ?, end_time = ?, location = ?, budget_cents = ?, updated_at = ? WHERE id = ? AND activity_status = 'S0' AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("title"), body.get("level"), body.get("start_time"), body.get("end_time"), body.get("location"), body.get("budget_cents"), LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @DeleteMapping("/activities/{id}")
+    public R<Void> deleteActivity(@PathVariable Long id) {
+        String sql = "UPDATE st_activity SET is_deleted = 1, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/activities/{id}/submit")
+    public R<Void> submitActivity(@PathVariable Long id) {
+        String sql = "UPDATE st_activity SET activity_status = 'S1', updated_at = ? WHERE id = ? AND activity_status = 'S0' AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/activities/{id}/approve")
+    public R<Void> approveActivity(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String action = (String) body.get("action");
+        String newStatus = "approve".equals(action) ? "S3" : "S4";
+        String sql = "UPDATE st_activity SET activity_status = ?, updated_at = ? WHERE id = ? AND activity_status = 'S1' AND is_deleted = 0";
+        jdbcTemplate.update(sql, newStatus, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/activities/{id}/withdraw")
+    public R<Void> withdrawActivity(@PathVariable Long id) {
+        String sql = "UPDATE st_activity SET activity_status = 'S0', updated_at = ? WHERE id = ? AND activity_status = 'S1' AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/recruit-plans")
+    public R<Void> createRecruitPlan(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO st_recruit_plan (title, assoc_id, target_count, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, body.get("title"), body.get("assoc_id"), body.get("target_count"), body.getOrDefault("status", "S0"), LocalDateTime.now(), LocalDateTime.now());
+        return R.ok();
+    }
+
+    @PutMapping("/recruit-plans/{id}")
+    public R<Void> updateRecruitPlan(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE st_recruit_plan SET title = ?, target_count = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        jdbcTemplate.update(sql, body.get("title"), body.get("target_count"), LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/recruit-plans/{id}/submit")
+    public R<Void> submitRecruitPlan(@PathVariable Long id) {
+        String sql = "UPDATE st_recruit_plan SET status = 'S1', updated_at = ? WHERE id = ? AND status = 'S0' AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/recruit-plans/{id}/approve")
+    public R<Void> approveRecruitPlan(@PathVariable Long id) {
+        String sql = "UPDATE st_recruit_plan SET status = 'S3', updated_at = ? WHERE id = ? AND status = 'S1' AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/recruit-plans/{id}/reject")
+    public R<Void> rejectRecruitPlan(@PathVariable Long id) {
+        String sql = "UPDATE st_recruit_plan SET status = 'S4', updated_at = ? WHERE id = ? AND status = 'S1' AND is_deleted = 0";
+        jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return R.ok();
+    }
+
+    @PostMapping("/recruit-applies")
+    public R<Void> createRecruitApply(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO st_recruit_apply (plan_id, assoc_id, student_id, apply_reason, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, body.get("plan_id"), body.get("assoc_id"), body.get("student_id"), body.get("apply_reason"), body.getOrDefault("status", "pending"), LocalDateTime.now(), LocalDateTime.now());
+        return R.ok();
+    }
 }
+

@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.time.LocalDateTime;
 
 /**
  * 系统管理模块 Controller
@@ -294,5 +295,162 @@ public class SysModuleController {
         result.put("page", page);
         result.put("page_size", page_size);
         return R.ok(result);
+    }
+
+    // --- 用户管理 (User Management) ---
+
+    @PostMapping("/users")
+    public R<Map<String, Object>> createUser(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO sys_user (username, password_hash, display_name, user_type, status, student_id, created_at, updated_at, is_deleted) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)";
+        String username = (String) body.get("username");
+        String passwordHash = (String) body.get("password_hash");
+        String displayName = (String) body.get("display_name");
+        String userType = (String) body.getOrDefault("user_type", "student");
+        String status = (String) body.getOrDefault("status", "active");
+        Integer studentId = body.get("student_id") != null ? Integer.valueOf(body.get("student_id").toString()) : null;
+        LocalDateTime now = LocalDateTime.now();
+
+        jdbcTemplate.update(sql, username, passwordHash, displayName, userType, status, studentId, now, now);
+
+        String fetchSql = "SELECT * FROM sys_user WHERE username = ? AND is_deleted = 0";
+        List<Map<String, Object>> items = jdbcTemplate.queryForList(fetchSql, username);
+        if (items.isEmpty()) return R.fail(500, "创建用户失败");
+        return R.ok(items.get(0));
+    }
+
+    @PutMapping("/users/{id}")
+    public R<Void> updateUser(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE sys_user SET display_name = ?, user_type = ?, status = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        String displayName = (String) body.get("display_name");
+        String userType = (String) body.get("user_type");
+        String status = (String) body.get("status");
+        
+        int rows = jdbcTemplate.update(sql, displayName, userType, status, LocalDateTime.now(), id);
+        return rows > 0 ? R.ok() : R.fail(404, "用户不存在");
+    }
+
+    @DeleteMapping("/users/{id}")
+    public R<Void> deleteUser(@PathVariable Long id) {
+        String sql = "UPDATE sys_user SET is_deleted = 1, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        int rows = jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return rows > 0 ? R.ok() : R.fail(404, "用户不存在");
+    }
+
+    @PostMapping("/users/{id}/reset-password")
+    public R<Void> resetPassword(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String newPassword = (String) body.get("new_password");
+        String sql = "UPDATE sys_user SET password_hash = ?, updated_at = ? WHERE id = ? AND is_deleted = 0";
+        int rows = jdbcTemplate.update(sql, newPassword, LocalDateTime.now(), id);
+        return rows > 0 ? R.ok() : R.fail(404, "用户不存在");
+    }
+
+    @PostMapping("/users/{id}/lock")
+    public R<Void> lockUser(@PathVariable Long id) {
+        String sql = "UPDATE sys_user SET status = 'locked', updated_at = ? WHERE id = ? AND is_deleted = 0";
+        int rows = jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return rows > 0 ? R.ok() : R.fail(404, "用户不存在");
+    }
+
+    @PostMapping("/users/{id}/unlock")
+    public R<Void> unlockUser(@PathVariable Long id) {
+        String sql = "UPDATE sys_user SET status = 'active', updated_at = ? WHERE id = ? AND is_deleted = 0";
+        int rows = jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return rows > 0 ? R.ok() : R.fail(404, "用户不存在");
+    }
+
+    @PostMapping("/users/{id}/enable")
+    public R<Void> enableUser(@PathVariable Long id) {
+        return unlockUser(id);
+    }
+
+    @PostMapping("/users/{id}/disable")
+    public R<Void> disableUser(@PathVariable Long id) {
+        String sql = "UPDATE sys_user SET status = 'disabled', updated_at = ? WHERE id = ? AND is_deleted = 0";
+        int rows = jdbcTemplate.update(sql, LocalDateTime.now(), id);
+        return rows > 0 ? R.ok() : R.fail(404, "用户不存在");
+    }
+
+    @PostMapping("/users/{id}/roles")
+    public R<Void> assignRoles(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        List<?> roleIds = (List<?>) body.get("role_ids");
+        if (roleIds == null) return R.fail(400, "需要 role_ids 参数");
+        
+        try {
+            jdbcTemplate.update("DELETE FROM sys_user_role WHERE user_id = ?", id);
+            for (Object roleId : roleIds) {
+                jdbcTemplate.update("INSERT INTO sys_user_role (user_id, role_id, created_at) VALUES (?, ?, ?)", 
+                        id, roleId, LocalDateTime.now());
+            }
+        } catch (Exception e) {
+            return R.fail(500, "分配角色失败");
+        }
+        return R.ok();
+    }
+
+    @DeleteMapping("/users/{id}/roles/{roleId}")
+    public R<Void> deleteUserRole(@PathVariable Long id, @PathVariable Long roleId) {
+        try {
+            jdbcTemplate.update("DELETE FROM sys_user_role WHERE user_id = ? AND role_id = ?", id, roleId);
+        } catch (Exception e) {
+            return R.fail(500, "移除角色失败");
+        }
+        return R.ok();
+    }
+
+    // --- 菜单管理 (Menu Management) ---
+
+    @GetMapping("/menus/mine")
+    public R<List<Map<String, Object>>> getMyMenus() {
+        return getMenus();
+    }
+
+    // --- 字典管理 (Dictionary Management) ---
+
+    @GetMapping("/dicts")
+    public R<Map<String, Object>> getDicts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int page_size) {
+        return getDictTypes(page, page_size);
+    }
+
+    @GetMapping("/dicts/{category}/items")
+    public R<List<Map<String, Object>>> getDictItemsByCategory(@PathVariable String category) {
+        return getDictByType(category);
+    }
+
+    @PostMapping("/dicts/items")
+    public R<Map<String, Object>> createDictItem(@RequestBody Map<String, Object> body) {
+        String sql = "INSERT INTO sys_dict (category, code, name_zh, sort, extra_json, is_active, is_deleted) " +
+                "VALUES (?, ?, ?, ?, ?, 1, 0)";
+        String category = (String) body.get("category");
+        String code = (String) body.get("code");
+        String nameZh = (String) body.get("name_zh");
+        Integer sort = body.get("sort") != null ? Integer.valueOf(body.get("sort").toString()) : 0;
+        String extraJson = (String) body.get("extra_json");
+        
+        jdbcTemplate.update(sql, category, code, nameZh, sort, extraJson);
+        
+        return R.ok(body);
+    }
+
+    @PutMapping("/dicts/items/{id}")
+    public R<Void> updateDictItem(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String sql = "UPDATE sys_dict SET category = ?, code = ?, name_zh = ?, sort = ?, extra_json = ? WHERE id = ? AND is_deleted = 0";
+        String category = (String) body.get("category");
+        String code = (String) body.get("code");
+        String nameZh = (String) body.get("name_zh");
+        Integer sort = body.get("sort") != null ? Integer.valueOf(body.get("sort").toString()) : 0;
+        String extraJson = (String) body.get("extra_json");
+        
+        int rows = jdbcTemplate.update(sql, category, code, nameZh, sort, extraJson, id);
+        return rows > 0 ? R.ok() : R.fail(404, "字典项不存在");
+    }
+
+    @DeleteMapping("/dicts/items/{id}")
+    public R<Void> deleteDictItem(@PathVariable Long id) {
+        String sql = "UPDATE sys_dict SET is_deleted = 1 WHERE id = ? AND is_deleted = 0";
+        int rows = jdbcTemplate.update(sql, id);
+        return rows > 0 ? R.ok() : R.fail(404, "字典项不存在");
     }
 }
